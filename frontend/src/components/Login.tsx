@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import styles from './Login.module.css';
 
 
 function Login()
@@ -41,13 +42,15 @@ function Login()
       };
 
     return( //what gets put in the page when added. DO NOT USE FORM TAGS
-        <div id="loginDiv">
-            <span id="inner-title">PLEASE LOG IN</span><br />
-            <input type="text" id="loginName" placeholder="Username" onChange={handleSetLoginName} /><br />
-            <input type="password" id="loginPassword" placeholder="Password" onChange={handleSetPassword} /><br />
-            <input type="submit" id="loginButton" className="buttons" value = "Do It"
-            onClick={doLogin} />
-            <span id="loginResult">{message}</span>
+        <div id="loginWrapper" className={styles.loginWrapper}>
+            <div id="loginDiv">
+                <span id="inner-title">PLEASE LOG IN</span><br />
+                <input type="text" id="loginName" placeholder="Username" onChange={handleSetLoginName} /><br />
+                <input type="password" id="loginPassword" placeholder="Password" onChange={handleSetPassword} /><br />
+                <input type="submit" id="loginButton" className="buttons" value = "Do It"
+                onClick={doLogin} />
+                <span id="loginResult">{message}</span>
+            </div>
         </div>
     );
     function handleSetLoginName( e: any ) : void

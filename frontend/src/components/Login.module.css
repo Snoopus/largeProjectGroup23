@@ -1,0 +1,15 @@
+.loginWrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin-top: 60px;
+    max-width: 70vw;
+    max-height: 30vh;
+    border: 3px solid #8c8c92ff;
+    border-radius: 10px;
+    background-color: #1e1e2cff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    box-sizing: border-box;
+}
