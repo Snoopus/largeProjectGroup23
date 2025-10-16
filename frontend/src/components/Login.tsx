@@ -11,15 +11,15 @@ function Login()
     {
         event.preventDefault();
 
-        var obj = {login:loginName,password:loginPassword};
-        var js = JSON.stringify(obj);
+        const obj = {login:loginName,password:loginPassword};
+        const js = JSON.stringify(obj);
   
         try
         {    
             const response = await fetch('http://localhost:5000/api/login',
                 {method:'POST',body:js,headers:{'Content-Type': 'application/json'}});
   
-            var res = JSON.parse(await response.text());
+            const res = JSON.parse(await response.text());
   
             if( res.id <= 0 )
             {
@@ -27,7 +27,7 @@ function Login()
             }
             else
             {
-                var user = {firstName:res.firstName,lastName:res.lastName,id:res.id}
+                const user = {firstName:res.firstName,lastName:res.lastName,id:res.id}
                 localStorage.setItem('user_data', JSON.stringify(user));
   
                 setMessage('');
@@ -42,14 +42,19 @@ function Login()
       };
 
     return( //what gets put in the page when added. DO NOT USE FORM TAGS
-        <div id="loginWrapper" className={styles.loginWrapper}>
+        <div id="loginWrapper" className={styles.cardWrapper}>
             <div id="loginDiv">
-                <span id="inner-title">PLEASE LOG IN</span><br />
-                <input type="text" id="loginName" placeholder="Username" onChange={handleSetLoginName} /><br />
-                <input type="password" id="loginPassword" placeholder="Password" onChange={handleSetPassword} /><br />
-                <input type="submit" id="loginButton" className="buttons" value = "Do It"
+                <span id="inner-title" className={styles.cardTitle}>PLEASE LOG IN</span><br />
+                <input type="text" id="loginName" placeholder="Username" className={styles.textInput} onChange={handleSetLoginName} /><br />
+                <input type="password" id="loginPassword" placeholder="Password" className={styles.textInput} onChange={handleSetPassword} /><br />
+                <input type="submit" id="loginButton" className={styles.buttons} value = "Do It"
                 onClick={doLogin} />
-                <span id="loginResult">{message}</span>
+                <div id="loginResult">{message}</div>
+                <br />
+                <br />
+                <div id="registerText" className={styles.registerText}>
+                    Not registered? <a className={styles.buttons} href="/register">Register here</a>
+                </div>
             </div>
         </div>
     );

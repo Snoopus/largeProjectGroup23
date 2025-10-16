@@ -1,15 +1,54 @@
-.loginWrapper {
+.cardWrapper {
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
     margin-top: 60px;
     max-width: 70vw;
-    max-height: 30vh;
-    border: 3px solid #8c8c92ff;
+    max-height: 50vh;
+    min-height: 40vh;
+    border: 3px solid #ffc904;
     border-radius: 10px;
-    background-color: #1e1e2cff;
+    background-color: rgb(0, 0, 0);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     padding: 20px;
     box-sizing: border-box;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.cardWrapper:hover {
+    border-color: #ab8900;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.cardTitle{
+    font-size: clamp(18px, 3vw, 24px);
+    font-weight: bold;
+    margin-bottom: clamp(30px, 5vh, 50px);
+    color: #ffffff;
+}
+
+.textInput {
+    width: 100%;
+    padding: clamp(8px, 1.5vh, 10px);
+    margin: clamp(8px, 1.5vh, 10px) 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+    font-size: clamp(14px, 2vw, 16px);
+}
+
+.buttons {
+    background-color: #ffc904;
+    color: white;
+    padding: clamp(8px, 1.5vh, 10px) clamp(15px, 3vw, 20px);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: clamp(14px, 2vw, 16px);
+    transition: background-color 0.3s ease;
+}
+.buttons:hover {
+    background-color: #ab8900;
+    
 }
