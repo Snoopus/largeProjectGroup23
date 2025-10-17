@@ -8,6 +8,7 @@ function PageHeader() {
   // Check if user is logged in on component mount
   useEffect(() => {
     const userData = localStorage.getItem('user_data');
+    
     if (userData) {
       const user = JSON.parse(userData);
       setIsLoggedIn(true);
@@ -44,7 +45,7 @@ function PageHeader() {
             // Show when logged in
             <>
               <span className={styles.welcomeText}>Welcome, {userName}!</span>
-              <a href="/cards" className={styles.navButton}>My Cards</a>
+              <a href="/cards" className={styles.navButton}>Add a Class</a>
               <button onClick={handleLogout} className={styles.navButton}>Logout</button>
             </>
           )}

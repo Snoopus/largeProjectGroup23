@@ -20,7 +20,19 @@ function Login()
         {    
             await loginUser(loginName, loginPassword);
             setMessage('');
-            window.location.href = '/cards';
+            const userData = localStorage.getItem('user_data');
+            if(userData) {
+                const user = JSON.parse(userData);
+                if(user.teacher === "true") {
+                    window.location.href = '/classes';
+                    return;
+                }
+                else {
+                    window.location.href = '/download';
+                    return;
+                }
+            }
+            window.location.href = '/classes';
         }
         catch(error:any)
         {

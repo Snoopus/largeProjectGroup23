@@ -16,8 +16,15 @@ export async function loginUser(loginName: string, password: string) {
         throw new Error('User/Password combination incorrect');
     }
 
-    const user = { firstName: res.firstName, lastName: res.lastName, id: res.id };
+    // Handle both firstName and first_name from API
+    const user = { 
+        firstName: res.firstName || res.first_name, 
+        lastName: res.lastName || res.last_name, 
+        id: res.id,
+        teacher: res.teacher || "false"
+    };
     localStorage.setItem('user_data', JSON.stringify(user));
+    console.log('Raw localStorage data:', user); // Debug
 
     return user;
 }

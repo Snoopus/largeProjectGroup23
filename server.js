@@ -81,8 +81,8 @@ app.post('/api/login', async (req, res, next) =>
 {
   // incoming: login, password
   // outgoing: id, firstName, lastName, error
-	
- var error = '';
+
+  var error = '';
 
   const { login, password } = req.body;
 
@@ -98,9 +98,10 @@ app.post('/api/login', async (req, res, next) =>
     id = results[0].UserID;
     fn = results[0].FirstName;
     ln = results[0].LastName;
+    teacher = results[0].teacher;
   }
 
-  var ret = { id:id, firstName:fn, lastName:ln, error:''};
+  var ret = { id:id, firstName:fn, lastName:ln, error:'', teacher: teacher};
   res.status(200).json(ret);
 });
 
