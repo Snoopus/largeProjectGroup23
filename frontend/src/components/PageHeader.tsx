@@ -1,4 +1,4 @@
-import styles from './PageHeader.module.css';
+import styles from '../css/PageHeader.module.css';
 
 function PageHeader() {
   return (

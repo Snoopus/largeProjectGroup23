@@ -1,43 +1,30 @@
-import React, { useState } from 'react';
-import styles from './Login.module.css';
+import LoginStyles from '../css/Login.module.css';
+import generalStyles from '../css/General.module.css';
+import { useState } from 'react';
+import { loginUser } from '../services/authService';
+
+// Merge both style objects - loginStyles will override generalStyles if there are conflicts
+const styles = { ...generalStyles, ...LoginStyles };
 
 
 function Login()
 {
     const [message,setMessage] = useState(''); //this is a setter, message is the variable and setMessage is the function to set it
-    const [loginName,setLoginName] = React.useState('');
-    const [loginPassword,setPassword] = React.useState('');
+    const [loginName,setLoginName] = useState('');
+    const [loginPassword,setPassword] = useState('');
     async function doLogin(event:any) : Promise<void>
     {
         event.preventDefault();
-
-        const obj = {login:loginName,password:loginPassword};
-        const js = JSON.stringify(obj);
   
         try
         {    
-            const response = await fetch('http://localhost:5000/api/login',
-                {method:'POST',body:js,headers:{'Content-Type': 'application/json'}});
-  
-            const res = JSON.parse(await response.text());
-  
-            if( res.id <= 0 )
-            {
-                setMessage('User/Password combination incorrect');
-            }
-            else
-            {
-                const user = {firstName:res.firstName,lastName:res.lastName,id:res.id}
-                localStorage.setItem('user_data', JSON.stringify(user));
-  
-                setMessage('');
-                window.location.href = '/cards';
-            }
+            await loginUser(loginName, loginPassword);
+            setMessage('');
+            window.location.href = '/cards';
         }
         catch(error:any)
         {
-            alert(error.toString());
-            return;
+            setMessage(error.message);
         }    
       };
 
