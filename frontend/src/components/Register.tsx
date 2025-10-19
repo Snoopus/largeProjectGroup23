@@ -76,7 +76,7 @@ function Register() {
                 <br />
                 <br />
                 <div id="registerText" >
-                    Not registered? <a className={styles.buttons} href="/register">Register here</a>
+                    Already have an account? <a className={styles.buttons} href="/">Log in</a>
                 </div>
             </div>
         </div>

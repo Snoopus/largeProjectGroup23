@@ -52,7 +52,7 @@ function Login()
                 <br />
                 <br />
                 <div id="registerText" className={styles.registerText}>
-                    Not registered? <a className={styles.buttons} href="/register">Register here</a>
+                    Not registered? <a className={styles.buttons} href="/register">Register</a>
                 </div>
             </div>
         </div>

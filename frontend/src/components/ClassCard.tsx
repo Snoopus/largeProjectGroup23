@@ -29,7 +29,7 @@ function ClassCard({ className, classCode, instructor, schedule, location }: Cla
       </div>
       <div className={styles.cardFooter}>
         <button className={styles.detailsButton}>View Details</button>
-        <button className={styles.attendanceButton}>Take Attendance</button>
+        {/* <button className={styles.attendanceButton}>Take Attendance</button> */}
       </div>
     </div>
   );
