@@ -1,0 +1,77 @@
+.header {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 60px;
+  background-color: #000000;
+  padding: 0 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  margin: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.logo {
+  height: 40px;
+  width: auto;
+  flex-shrink: 0;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(16px, 3vw, 24px);
+  font-weight: bold;
+  color: #ffc904;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.navButton {
+  background-color: #ffc904;
+  color: #000000;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: clamp(12px, 1.5vw, 14px);
+  font-weight: 500;
+  text-decoration: none;
+  transition: background-color 0.3s ease;
+  white-space: nowrap;
+}
+
+.navButton:hover {
+  background-color: #ab8900;
+  color: #ffffff;
+}
+
+.welcomeText {
+  color: #ffffff;
+  font-size: clamp(12px, 1.5vw, 14px);
+  font-weight: 500;
+  white-space: nowrap;
+}

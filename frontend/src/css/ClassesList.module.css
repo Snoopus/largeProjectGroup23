@@ -1,0 +1,48 @@
+.classesWrapper {
+    padding: 80px 20px 20px;
+    min-height: 100vh;
+    background-color: #1e1e2c;
+}
+
+.pageTitle {
+    color: #ffc904;
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 32px;
+}
+
+.classesGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.message {
+    color: #ffffff;
+    text-align: center;
+    font-size: 18px;
+    margin: 20px;
+}
+
+.noClasses {
+    color: #ffffff;
+    text-align: center;
+    font-size: 18px;
+    grid-column: 1 / -1;
+    margin: 40px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .classesGrid {
+        grid-template-columns: 1fr;
+        padding: 10px;
+    }
+    
+    .pageTitle {
+        font-size: 24px;
+    }
+}

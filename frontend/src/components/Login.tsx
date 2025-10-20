@@ -1,53 +1,60 @@
-import React, { useState } from 'react';
+import LoginStyles from '../css/Login.module.css';
+import generalStyles from '../css/General.module.css';
+import { useState } from 'react';
+import { loginUser } from '../services/authService';
+
+// Merge both style objects - loginStyles will override generalStyles if there are conflicts
+const styles = { ...generalStyles, ...LoginStyles };
 
 
 function Login()
 {
     const [message,setMessage] = useState(''); //this is a setter, message is the variable and setMessage is the function to set it
-    const [loginName,setLoginName] = React.useState('');
-    const [loginPassword,setPassword] = React.useState('');
+    const [loginName,setLoginName] = useState('');
+    const [loginPassword,setPassword] = useState('');
     async function doLogin(event:any) : Promise<void>
     {
         event.preventDefault();
-
-        var obj = {login:loginName,password:loginPassword};
-        var js = JSON.stringify(obj);
   
         try
         {    
-            const response = await fetch('http://localhost:5000/api/login',
-                {method:'POST',body:js,headers:{'Content-Type': 'application/json'}});
-  
-            var res = JSON.parse(await response.text());
-  
-            if( res.id <= 0 )
-            {
-                setMessage('User/Password combination incorrect');
+            await loginUser(loginName, loginPassword);
+            setMessage('');
+            const userData = localStorage.getItem('user_data');
+            if(userData) {
+                const user = JSON.parse(userData);
+                if(user.teacher === "true") {
+                    window.location.href = '/classes';
+                    return;
+                }
+                else {
+                    window.location.href = '/download';
+                    return;
+                }
             }
-            else
-            {
-                var user = {firstName:res.firstName,lastName:res.lastName,id:res.id}
-                localStorage.setItem('user_data', JSON.stringify(user));
-  
-                setMessage('');
-                window.location.href = '/cards';
-            }
+            window.location.href = '/classes';
         }
         catch(error:any)
         {
-            alert(error.toString());
-            return;
+            setMessage(error.message);
         }    
       };
 
     return( //what gets put in the page when added. DO NOT USE FORM TAGS
-        <div id="loginDiv">
-            <span id="inner-title">PLEASE LOG IN</span><br />
-            <input type="text" id="loginName" placeholder="Username" onChange={handleSetLoginName} /><br />
-            <input type="password" id="loginPassword" placeholder="Password" onChange={handleSetPassword} /><br />
-            <input type="submit" id="loginButton" className="buttons" value = "Do It"
-            onClick={doLogin} />
-            <span id="loginResult">{message}</span>
+        <div id="loginWrapper" className={styles.cardWrapper}>
+            <div id="loginDiv">
+                <span id="inner-title" className={styles.cardTitle}>PLEASE LOG IN</span><br />
+                <input type="text" id="loginName" placeholder="Username" className={styles.textInput} onChange={handleSetLoginName} /><br />
+                <input type="password" id="loginPassword" placeholder="Password" className={styles.textInput} onChange={handleSetPassword} /><br />
+                <input type="submit" id="loginButton" className={styles.buttons} value = "Do It"
+                onClick={doLogin} />
+                <div id="loginResult">{message}</div>
+                <br />
+                <br />
+                <div id="registerText" className={styles.registerText}>
+                    Not registered? <a className={styles.buttons} href="/register">Register</a>
+                </div>
+            </div>
         </div>
     );
     function handleSetLoginName( e: any ) : void

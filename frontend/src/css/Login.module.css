@@ -1,0 +1,30 @@
+.cardWrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 60px;
+    max-width: 70vw;
+    min-width: 30vw;
+    max-height: none;
+    min-height: 40vh;
+    border: 3px solid #ffc904;
+    border-radius: 10px;
+    background-color: rgb(0, 0, 0);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    box-sizing: border-box;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    overflow-y: auto;
+}
+
+.cardWrapper:hover {
+    border-color: #ab8900;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.cardTitle{
+    font-size: clamp(18px, 3vw, 24px);
+    font-weight: bold;
+    margin-bottom: clamp(30px, 5vh, 50px);
+    color: #ffffff;
+}
