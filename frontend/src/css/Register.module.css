@@ -35,3 +35,34 @@
     margin-bottom: 2px;
     text-align: left;
 }
+
+.toggleButton {
+    background-color: #4a4a4a;
+    color: #ffffff;
+    border: 2px solid #666;
+    padding: 10px 20px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    min-width: 150px;
+}
+
+.toggleButton:hover {
+    background-color: #5a5a5a;
+    border-color: #777;
+}
+
+.toggleActive {
+    background-color: #ffc904;
+    color: #000000;
+    border-color: #ffc904;
+}
+
+.toggleActive:hover {
+    background-color: #ab8900;
+    border-color: #ab8900;
+    color: #ffffff;
+}

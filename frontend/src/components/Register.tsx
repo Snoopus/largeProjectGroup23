@@ -15,6 +15,7 @@ function Register() {
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [id,setId] = useState('');
+    const [role, setRole] = useState('student');
 
     async function doRegister(event:any) : Promise<void>
     {
@@ -69,6 +70,16 @@ function Register() {
                     <label className={styles.inputLabel} htmlFor="registerConfirmPassword">Confirm Password:</label>
                     <input type="password" id="registerConfirmPassword" placeholder="Confirm Password" className={styles.textInput} onChange={handleSetConfirmPassword} />
                 </div>
+                <div id="roleButton" className={styles.inputRow}>
+                    <label className={styles.inputLabel}>Are you an instructor?</label>
+                    <button 
+                        type="button"
+                        className={`${styles.toggleButton} ${role === 'teacher' ? styles.toggleActive : ''}`}
+                        onClick={() => setRole(role === 'teacher' ? 'student' : 'teacher')}
+                    >
+                        {role === 'teacher' ? 'Yes - Instructor' : 'No - Student'}
+                    </button>
+                </div>
                 
                 <input type="submit" id="registerButton" className={styles.buttons} value = "Register"
                 onClick={doRegister} />
@@ -107,5 +118,4 @@ function Register() {
             setConfirmPassword( e.target.value );
         }
 }
-
 export default Register;
