@@ -106,6 +106,48 @@ app.post('/api/login', async (req, res, next) =>
 });
 
 
+app.post('/api/register', async (req, res, next) =>
+{
+  // incoming: email, password, firstName, lastName, id
+  // outgoing: error
+
+  const { email, password, firstName, lastName, id, role } = req.body;
+
+  const newUser = {login:email, password:password, FirstName:firstName, LastName:lastName, UserID:id, Role:role};
+  var error = '';
+
+  try {
+    const db = client.db('Project');
+
+    // Check if user with this email already exists
+    const existing_email = await db.collection('Users').findOne({login: email});
+    
+    // Check if user with this UserID already exists
+    const existing_nid = await db.collection('Users').findOne({UserID: id});
+
+    if (existing_email) {
+      error = 'Email already exists';
+      return res.status(400).json({ error });
+    }
+
+    if (existing_nid) {
+      error = 'User ID already exists';
+      return res.status(400).json({ error });
+    }
+
+    // If no existing users found, proceed with registration
+    const result = await db.collection('Users').insertOne(newUser);
+    
+    // Successful registration
+    res.status(200).json({ error: '' });
+
+  } catch (e) {
+    error = e.toString();
+    res.status(500).json({ error });
+  }
+});
+
+
 app.post('/api/searchcards', async (req, res, next) => 
 {
   // incoming: userId, search

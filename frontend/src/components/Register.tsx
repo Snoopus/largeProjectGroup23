@@ -29,7 +29,7 @@ function Register() {
 
         try {
             // Register the user
-            await registerUser(email, password, firstName, lastName, id);
+            await registerUser(email, password, firstName, lastName, id, role);
             
             // Automatically log them in after successful registration
             await loginUser(email, password);

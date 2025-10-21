@@ -34,9 +34,10 @@ export async function registerUser(
     password: string,
     firstName: string,
     lastName: string,
-    id: string
+    id: string,
+    role: string
 ) {
-    const obj = { email, password, firstName, lastName, id };
+    const obj = { email, password, firstName, lastName, id, role };
     const js = JSON.stringify(obj);
 
     const response = await fetch('http://localhost:5000/api/register', {
@@ -47,8 +48,10 @@ export async function registerUser(
 
     const res = JSON.parse(await response.text());
 
-    if (!res.success) {
-        throw new Error(res.message || 'Registration failed');
+    console.log(res); 
+
+    if (res.error != '') {
+        throw new Error(res.error || 'Registration failed');
     }
 
     return res;
