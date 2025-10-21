@@ -23,7 +23,7 @@ function Login()
             const userData = localStorage.getItem('user_data');
             if(userData) {
                 const user = JSON.parse(userData);
-                if(user.teacher === "true") {
+                if(user.role === "teacher") {
                     window.location.href = '/classes';
                     return;
                 }
@@ -32,7 +32,7 @@ function Login()
                     return;
                 }
             }
-            window.location.href = '/classes';
+            window.location.href = '/download';
         }
         catch(error:any)
         {

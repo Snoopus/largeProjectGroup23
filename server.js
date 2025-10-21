@@ -92,16 +92,17 @@ app.post('/api/login', async (req, res, next) =>
   var id = -1;
   var fn = '';
   var ln = '';
+  var role = '';
 
   if( results.length > 0 )
   {
     id = results[0].UserID;
     fn = results[0].FirstName;
     ln = results[0].LastName;
-    teacher = results[0].teacher;
+    role = results[0].Role;
   }
 
-  var ret = { id:id, firstName:fn, lastName:ln, error:'', teacher: teacher};
+  var ret = { id:id, firstName:fn, lastName:ln, error:'', role: role};
   res.status(200).json(ret);
 });
 
