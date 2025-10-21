@@ -5,6 +5,8 @@ import { registerUser, loginUser } from '../services/authService';
 
 // Merge both style objects - registerStyles will override generalStyles if there are conflicts
 const styles = { ...generalStyles, ...registerStyles };
+const STUDENT = 'student';
+const TEACHER = 'teacher';
 
 function Register() {
     // Registration component code here
@@ -15,7 +17,7 @@ function Register() {
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [id,setId] = useState('');
-    const [role, setRole] = useState('student');
+    const [role, setRole] = useState(STUDENT);
 
     async function doRegister(event:any) : Promise<void>
     {
@@ -29,13 +31,20 @@ function Register() {
 
         try {
             // Register the user
-            await registerUser(email, password, firstName, lastName, id);
+            await registerUser(email, password, firstName, lastName, id, role);
             
             // Automatically log them in after successful registration
             await loginUser(email, password);
             
             setMessage('Registration successful!');
-            window.location.href = '/cards';
+            if(role === TEACHER) {
+                window.location.href = '/classes';
+                return;
+            }
+            else {
+                window.location.href = '/download';
+                return;
+            }
         }
         catch (error: any) {
             setMessage(error.message || 'Registration failed');
@@ -74,10 +83,10 @@ function Register() {
                     <label className={styles.inputLabel}>Are you an instructor?</label>
                     <button 
                         type="button"
-                        className={`${styles.toggleButton} ${role === 'teacher' ? styles.toggleActive : ''}`}
-                        onClick={() => setRole(role === 'teacher' ? 'student' : 'teacher')}
+                        className={`${styles.toggleButton} ${role === TEACHER ? styles.toggleActive : ''}`}
+                        onClick={() => setRole(role === TEACHER ? STUDENT : TEACHER)}
                     >
-                        {role === 'teacher' ? 'Yes - Instructor' : 'No - Student'}
+                        {role === TEACHER ? 'Yes - Instructor' : 'No - Student'}
                     </button>
                 </div>
                 
