@@ -45,7 +45,7 @@ function PageHeader() {
             // Show when logged in
             <>
               <span className={styles.welcomeText}>Welcome, {userName}!</span>
-              <a href="/cards" className={styles.navButton}>Add a Class</a>
+              <a href="/addClass" className={styles.navButton}>Add a Class</a>
               <button onClick={handleLogout} className={styles.navButton}>Logout</button>
             </>
           )}
