@@ -5,6 +5,7 @@ import LoginPage from './pages/LoginPage';
 import ClassPage from "./pages/ClassPage";
 import RegisterPage from './pages/RegisterPage';
 import AppDownloadPage from "./pages/AppDownloadPage";
+import ClassDetailsPage from "./pages/ClassDetailsPage";
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
       <Routes>
         <Route path="/" element={<LoginPage />} />
         <Route path="/classes" element={<ClassPage />} />
+        <Route path="/classes/:classId" element={<ClassDetailsPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/download" element={<AppDownloadPage />} />
       </Routes>

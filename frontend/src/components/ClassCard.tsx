@@ -1,4 +1,5 @@
 import styles from '../css/ClassCard.module.css';
+import { useNavigate } from 'react-router-dom';
 
 interface ClassCardProps {
   className: string;
@@ -6,10 +7,15 @@ interface ClassCardProps {
   instructor: string;
   schedule: string;
   location: string;
-//   id: string;
+  id: string;
 }
 
-function ClassCard({ className, classCode, instructor, schedule, location }: ClassCardProps) {
+function ClassCard({ className, classCode, instructor, schedule, location, id }: ClassCardProps) {
+  const navigate = useNavigate();
+
+  const handleViewDetails = () => {
+    navigate(`/classes/${id}`);
+  };
   return (
     <div className={styles.classCard}>
       <div className={styles.cardHeader}>
@@ -28,7 +34,7 @@ function ClassCard({ className, classCode, instructor, schedule, location }: Cla
         </p>
       </div>
       <div className={styles.cardFooter}>
-        <button className={styles.detailsButton}>View Details</button>
+        <button className={styles.detailsButton} onClick={handleViewDetails}>View Details</button>
         {/* <button className={styles.attendanceButton}>Take Attendance</button> */}
       </div>
     </div>
