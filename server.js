@@ -8,6 +8,9 @@ const { MongoClient, ServerApiVersion } = require('mongodb');
 //Go to drivers and get connection string for MongoDB
 //You have to set incoming ip address to all, 0.0.0.0/0
 
+const STUDENT = 'student';
+const TEACHER = 'teacher';
+
 // const client = new MongoClient(url);
 const url = process.env.MONGO_URL;
 const client = new MongoClient(url, {
@@ -203,6 +206,44 @@ app.post('/api/createclass', async (req, res, next) => {
   } catch (e) {
     error = e.toString();
     res.status(500).json({ error });
+  }
+});
+
+app.post('/api/fetchclasses', async (req, res, next) => {
+  // incoming: userId, role
+  // outgoing: classes, error
+
+  const { userId, role } = req.body;
+
+  let error = '';
+
+  try {
+    const db = client.db('Project');
+    let classes = [];
+
+    if (role === TEACHER) {
+      // If teacher, find classes where instructorId matches
+      classes = await db.collection('Classes').find({
+        instructorId: new ObjectId(userId)
+      }).toArray();
+    } else if (role === STUDENT) {
+      // If student, find classes where userId is in studentList
+      classes = await db.collection('Classes').find({
+        studentList: new ObjectId(userId)
+      }).toArray();
+    } else {
+      error = 'Invalid role';
+      return res.status(400).json({ error, classes: [] });
+    }
+
+    res.status(200).json({ 
+      error: '',
+      classes: classes
+    });
+
+  } catch (e) {
+    error = e.toString();
+    res.status(500).json({ error, classes: [] });
   }
 });
 
