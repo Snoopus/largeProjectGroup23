@@ -109,12 +109,21 @@ app.post('/api/login', async (req, res, next) =>
 
 app.post('/api/register', async (req, res, next) =>
 {
-  // incoming: email, password, firstName, lastName, id
+  // incoming: email, password, firstName, lastName, id, role
   // outgoing: error
 
   const { email, password, firstName, lastName, id, role } = req.body;
 
-  const newUser = {login:email, password:password, FirstName:firstName, LastName:lastName, UserID:id, Role:role};
+  const newUser = {
+    login:email, 
+    password:password, 
+    FirstName:firstName, 
+    LastName:lastName, 
+    UserID:id, 
+    Role:role,
+    classList: []
+  };
+
   var error = '';
 
   try {
@@ -141,6 +150,55 @@ app.post('/api/register', async (req, res, next) =>
     
     // Successful registration
     res.status(200).json({ error: '' });
+
+  } catch (e) {
+    error = e.toString();
+    res.status(500).json({ error });
+  }
+});
+
+
+app.post('/api/createclass', async (req, res, next) => {
+  // incoming: name, duration, instructorId, instructorName
+  // outgoing: error, classId
+
+  const { name, duration, instructorId, instructorName } = req.body;
+
+  const newClass = {
+    name: name,
+    duration: duration,
+    instructorId: new ObjectId(instructorId), // Convert string to ObjectId
+    instructorName: instructorName,
+    studentList: [],
+    currentAttendance: null, 
+    deviceName: null,
+    secret: null,
+  };
+
+  let error = '';
+
+  try {
+    const db = client.db('Project');
+
+    // Check if a class with this name and instructor already exists
+    const existingClass = await db.collection('Classes').findOne({
+      name: name,
+      instructorId: new ObjectId(instructorId)
+    });
+
+    if (existingClass) {
+      error = 'Class with this name already exists for this instructor';
+      return res.status(400).json({ error });
+    }
+
+    // Insert the new class
+    const result = await db.collection('Classes').insertOne(newClass);
+
+    // Successful creation
+    res.status(200).json({ 
+      error: '',
+      classId: result.insertedId 
+    });
 
   } catch (e) {
     error = e.toString();
