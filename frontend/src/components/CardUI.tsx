@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import buildPath from './BuildPath';
 
 
 function CardUI() {
@@ -20,7 +21,7 @@ function CardUI() {
 
         try
         {
-            const response = await fetch('http://localhost:5000/api/addcard',
+            const response = await fetch(buildPath('api/addcard'),
             {method:'POST',body:js,headers:{'Content-Type': 'application/json'}});
 
             let txt = await response.text();
@@ -50,7 +51,7 @@ function CardUI() {
 
         try
         {
-            const response = await fetch('http://localhost:5000/api/searchcards',
+            const response = await fetch(buildPath('api/searchcards'),
             {method:'POST',body:js,headers:{'Content-Type': 'application/json'}});
 
             let txt = await response.text();

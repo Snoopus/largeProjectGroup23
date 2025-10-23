@@ -57,11 +57,11 @@ function ClassesList()
 
         //     const user = JSON.parse(userData);
             
-        //     // Fetch classes from API
-        //     const response = await fetch(`http://localhost:5000/api/classes/${user.id}`, {
-        //         method: 'GET',
-        //         headers: { 'Content-Type': 'application/json' }
-        //     });
+    //     // Fetch classes from API
+    //     const response = await fetch(buildPath(`api/classes/${user.id}`), {
+    //         method: 'GET',
+    //         headers: { 'Content-Type': 'application/json' }
+    //     });
 
         //     const data = await response.json();
 
