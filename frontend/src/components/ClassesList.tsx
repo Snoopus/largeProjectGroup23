@@ -18,6 +18,10 @@ function ClassesList()
     const [message, setMessage] = useState('');
     const [loading, setLoading] = useState(true);
 
+    // CAN BE DELETED AFTER THE ABOVE GET USED, NEEDED TO `npm run build`
+    setMessage('');
+    setLoading(true);
+
     // Fetch classes when component mounts
     useEffect(() => {
         fetchClasses();
@@ -86,7 +90,7 @@ function ClassesList()
                     classes.map((classItem) => (
                         <ClassCard
                             key={classItem.id}
-                            id={classItem.id}
+                            // id={classItem.id}
                             className={classItem.className}
                             classCode={classItem.classCode}
                             instructor={classItem.instructor}
