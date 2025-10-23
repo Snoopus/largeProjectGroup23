@@ -1,9 +1,9 @@
-//const url = "lp.ilovenarwhals.xyz";
+const url = "lp.ilovenarwhals.xyz";
 
 export default function buildPath(route: string): string {
     if (import.meta.env.MODE !== "development") 
     {
-        return "/api/" + route;
+        return "http://" + url + ":5000/" + route;
     }
     else
     {
