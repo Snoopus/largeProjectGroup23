@@ -1,5 +1,5 @@
 import PageHeader from "../components/PageHeader";
-import ClassesList from "../components/ClassesList";
+// import ClassesList from "../components/ClassesList";
 import AppDownload from "../components/AppDownload";
 const ClassPage = () =>
 {
