@@ -1,7 +1,7 @@
 import styles from '../css/ClassesList.module.css';
 import { useState, useEffect } from 'react';
 import ClassCard from './ClassCard';
-import { buildPath } from "./buildPath";
+import { buildPath } from "../services/buildPath";
 
 // Define the type for a class
 interface Class {
