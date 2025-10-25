@@ -1,9 +1,11 @@
 import styles from '../css/PageHeader.module.css';
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 function PageHeader() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState('');
+  const [userRole, setUserRole] = useState('');
 
   // Check if user is logged in on component mount
   useEffect(() => {
@@ -13,13 +15,16 @@ function PageHeader() {
       const user = JSON.parse(userData);
       setIsLoggedIn(true);
       setUserName(user.firstName || 'User');
+      setUserRole(user.role || '');
     }
   }, []);
+
+  const navigate = useNavigate();
 
   const handleLogout = () => {
     localStorage.removeItem('user_data');
     setIsLoggedIn(false);
-    window.location.href = '/';
+    navigate('/');
   };
 
   return (
@@ -45,7 +50,11 @@ function PageHeader() {
             // Show when logged in
             <>
               <span className={styles.welcomeText}>Welcome, {userName}!</span>
-              <a href="/addClass" className={styles.navButton}>Add a Class</a>
+              {userRole === 'student' ? (
+                <button onClick={() => navigate('/joinclass')} className={styles.navButton}>Join a class</button>
+              ) : (
+                <button onClick={() => navigate('/addClass')} className={styles.navButton}>Add a Class</button>
+              )}
               <button onClick={handleLogout} className={styles.navButton}>Logout</button>
             </>
           )}
