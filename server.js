@@ -162,45 +162,52 @@ app.post('/api/register', async (req, res, next) =>
 
 
 app.post('/api/createclass', async (req, res, next) => {
-  // incoming: name, duration, instructorId, instructorName
-  // outgoing: error, classId
+  // incoming: name, duration, instructorId
+  // outgoing: error
 
-  const { name, duration, instructorId, instructorName } = req.body;
-
-  const newClass = {
-    name: name,
-    duration: duration,
-    instructorId: new ObjectId(instructorId), // Convert string to ObjectId
-    instructorName: instructorName,
-    studentList: [],
-    currentAttendance: null, 
-    deviceName: null,
-    secret: null,
-  };
+  const { name, duration, instructorId } = req.body;
 
   let error = '';
 
   try {
     const db = client.db('Project');
 
-    // Check if a class with this name and instructor already exists
+    const instructor = await db.collection('Users').findOne({UserID: instructorId, Role: TEACHER});
+
+    if (!instructor) {
+      error = `Instructor not found`;
+      return res.status(404).json({ error });
+    }
+
+    const instructorName = `${instructor.FirstName} ${instructor.LastName}`;
+
+    // Check if a class with this name already exists
     const existingClass = await db.collection('Classes').findOne({
       name: name,
-      instructorId: new ObjectId(instructorId)
     });
 
     if (existingClass) {
-      error = 'Class with this name already exists for this instructor';
+      error = 'Class with this name already exists';
       return res.status(400).json({ error });
     }
+
+    const newClass = {
+      name: name,
+      duration: duration,
+      instructorId: instructorId,
+      instructorName: instructorName,
+      studentList: [],
+      currentAttendance: null, 
+      deviceName: null,
+      secret: null,
+    };
 
     // Insert the new class
     const result = await db.collection('Classes').insertOne(newClass);
 
     // Successful creation
     res.status(200).json({ 
-      error: '',
-      classId: result.insertedId 
+      error: ''
     });
 
   } catch (e) {
@@ -209,11 +216,12 @@ app.post('/api/createclass', async (req, res, next) => {
   }
 });
 
+
 app.post('/api/fetchclasses', async (req, res, next) => {
-  // incoming: userId, role
+  // incoming: userId
   // outgoing: classes, error
 
-  const { userId, role } = req.body;
+  const { userId } = req.body;
 
   let error = '';
 
@@ -221,18 +229,27 @@ app.post('/api/fetchclasses', async (req, res, next) => {
     const db = client.db('Project');
     let classes = [];
 
+    const user = await db.collection('Users').findOne({UserID: userId});
+
+    if (!user) {
+      error = `User not found ${userId}`;
+      return res.status(404).json({ error, classes: [] });
+    }
+
+    const role = user.Role;
+
     if (role === TEACHER) {
       // If teacher, find classes where instructorId matches
       classes = await db.collection('Classes').find({
-        instructorId: new ObjectId(userId)
+        instructorId: userId
       }).toArray();
     } else if (role === STUDENT) {
       // If student, find classes where userId is in studentList
       classes = await db.collection('Classes').find({
-        studentList: new ObjectId(userId)
+        'studentList.UserID': userId
       }).toArray();
     } else {
-      error = 'Invalid role';
+      error = `Invalid role ${role}`;
       return res.status(400).json({ error, classes: [] });
     }
 
@@ -247,6 +264,65 @@ app.post('/api/fetchclasses', async (req, res, next) => {
   }
 });
 
+
+app.post('/api/joinclass', async (req, res, next) => {
+  // incoming: userId, name
+  // outgoing: error
+
+  const { userId, name } = req.body;
+
+  let error = '';
+
+  try {
+    const db = client.db('Project');
+
+    // Find the class by name
+    const classToJoin = await db.collection('Classes').findOne({ name: name });
+    if (!classToJoin) {
+      error = 'Class not found';
+      return res.status(404).json({ error });
+    }
+
+    const user = await db.collection('Users').findOne({UserID: userId});
+    if (!user) {
+      error = `User not found ${userId}`;
+      return res.status(404).json({ error });
+    }
+
+    if (user.Role !== STUDENT) {
+      error = 'Only students can join classes';
+      return res.status(403).json({ error });
+    }
+
+    // Check if userId is already in the studentList
+    const isUserInClass = classToJoin.studentList.some(student => student.UserID === userId);
+
+    if (isUserInClass) {
+      error = 'User already in class';
+      return res.status(400).json({ error });
+    }
+
+    // Add user to class studentList
+    await db.collection('Classes').updateOne(
+      { _id: classToJoin._id },
+      { $push: { studentList: { UserID: user._id } } }
+    );
+
+    // Add class to user's classList
+    await db.collection('Users').updateOne(
+      { UserID: userId },
+      { $push: { classList: classToJoin._id } }
+    );
+
+
+    res.status(200).json({ error: '' });
+
+  } catch (e) {
+    error = e.toString()
+    res.status(500).json({ error })
+  }
+
+});
 
 app.post('/api/searchcards', async (req, res, next) => 
 {
