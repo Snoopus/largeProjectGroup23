@@ -7,8 +7,13 @@ import { buildPath } from "../services/buildPath";
 interface Class {
     _id: string;
     name: string;
+    classCode: string;
+    section: string;
     instructorName: string;
     duration: string;
+    daysOffered: string;
+    startTime: string;
+    endTime: string;
 }
 
 function ClassesList()
@@ -52,8 +57,7 @@ function ClassesList()
             const response = await fetch(buildPath('api/fetchclasses'), {
                 method: 'POST',
                 body: JSON.stringify({
-                    userId: user.id,
-                    role: user.role
+                    userId: user.id
                 }),
                 headers: { 'Content-Type': 'application/json' }
             });
@@ -87,8 +91,13 @@ function ClassesList()
                             key={classItem._id}
                             id={classItem._id}
                             className={classItem.name}
+                            classCode={classItem.classCode}
+                            section={classItem.section}
                             instructorName={classItem.instructorName}
                             duration={classItem.duration}
+                            daysOffered={classItem.daysOffered}
+                            startTime={classItem.startTime}
+                            endTime={classItem.endTime}
                         />
                     ))
                 ) : (
