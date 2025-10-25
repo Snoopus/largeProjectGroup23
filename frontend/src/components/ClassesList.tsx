@@ -49,7 +49,7 @@ function ClassesList()
             const user = JSON.parse(userData);
             
             // Fetch classes from API
-            const response = await fetch(buildPath('/api/fetchclasses'), {
+            const response = await fetch(buildPath('api/fetchclasses'), {
                 method: 'POST',
                 body: JSON.stringify({
                     userId: user.id,
