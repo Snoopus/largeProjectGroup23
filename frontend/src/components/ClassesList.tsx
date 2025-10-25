@@ -28,20 +28,6 @@ function ClassesList()
     }, []);
 
     async function fetchClasses() {
-        // const class1: Class = {
-        //     id: '1',
-        //     className: 'Introduction to Programming',
-        //     instructorName: 'Dr. Smith',
-        //     duration: '50 minutes'
-        // };
-        // const class2: Class = {
-        //     id: '2',
-        //     className: 'Data Structures and Algorithms',
-        //     instructorName: 'Prof. Johnson',
-        //     duration: '75 minutes'
-        // };
-
-        //setClasses([class1, class2]);
         try {
             // Get user data from localStorage
             const userData = localStorage.getItem('user_data');
