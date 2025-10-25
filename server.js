@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 // const MongoClient = require('mongodb').MongoClient;
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 //const url = '';
 //Go to drivers and get connection string for MongoDB
 //You have to set incoming ip address to all, 0.0.0.0/0
@@ -168,10 +168,15 @@ app.post('/api/createclass', async (req, res, next) => {
 
   const { name, duration, instructorId, instructorName } = req.body;
 
+  // Validate instructorId exists
+  if (!instructorId) {
+    return res.status(400).json({ error: 'Instructor ID is required' });
+  }
+
   const newClass = {
     name: name,
     duration: duration,
-    instructorId: new ObjectId(instructorId), // Convert string to ObjectId
+    instructorId: instructorId, // Keep as string (custom ID like 'db285931')
     instructorName: instructorName,
     studentList: [],
     currentAttendance: null, 
@@ -187,7 +192,7 @@ app.post('/api/createclass', async (req, res, next) => {
     // Check if a class with this name and instructor already exists
     const existingClass = await db.collection('Classes').findOne({
       name: name,
-      instructorId: new ObjectId(instructorId)
+      instructorId: instructorId  // Use string directly
     });
 
     if (existingClass) {
@@ -225,12 +230,12 @@ app.post('/api/fetchclasses', async (req, res, next) => {
     if (role === TEACHER) {
       // If teacher, find classes where instructorId matches
       classes = await db.collection('Classes').find({
-        instructorId: new ObjectId(userId)
+        instructorId: userId
       }).toArray();
     } else if (role === STUDENT) {
       // If student, find classes where userId is in studentList
       classes = await db.collection('Classes').find({
-        studentList: new ObjectId(userId)
+        studentList: userId
       }).toArray();
     } else {
       error = 'Invalid role';
