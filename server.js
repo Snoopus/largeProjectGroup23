@@ -3,10 +3,13 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 // const MongoClient = require('mongodb').MongoClient;
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 //const url = '';
 //Go to drivers and get connection string for MongoDB
 //You have to set incoming ip address to all, 0.0.0.0/0
+
+const STUDENT = 'student';
+const TEACHER = 'teacher';
 
 // const client = new MongoClient(url);
 const url = process.env.MONGO_URL;
@@ -47,8 +50,9 @@ app.use((req, res, next) =>
     next();
 });
 //app.listen(5000); // start Node + Express server on port 5000
-const server = app.listen(5000, () => {
-  console.log('Server running on port 5000');
+const PORT = process.env.PORT || 5000;
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on port ${PORT} and accessible from all network interfaces`);
 });
 
 app.post('/api/addcard', async (req, res, next) =>
@@ -109,12 +113,21 @@ app.post('/api/login', async (req, res, next) =>
 
 app.post('/api/register', async (req, res, next) =>
 {
-  // incoming: email, password, firstName, lastName, id
+  // incoming: email, password, firstName, lastName, id, role
   // outgoing: error
 
   const { email, password, firstName, lastName, id, role } = req.body;
 
-  const newUser = {login:email, password:password, FirstName:firstName, LastName:lastName, UserID:id, Role:role};
+  const newUser = {
+    login:email, 
+    password:password, 
+    FirstName:firstName, 
+    LastName:lastName, 
+    UserID:id, 
+    Role:role,
+    classList: []
+  };
+
   var error = '';
 
   try {
@@ -149,29 +162,183 @@ app.post('/api/register', async (req, res, next) =>
 });
 
 
-app.post('/api/searchcards', async (req, res, next) => 
-{
-  // incoming: userId, search
-  // outgoing: results[], error
+app.post('/api/createclass', async (req, res, next) => {
+  // incoming: name, duration, instructorId, section, daysOffered, startTime, endTime
+  // outgoing: error, class ObjectID
 
-  var error = '';
+  const { name, duration, instructorId, section, daysOffered, startTime, endTime, classCode } = req.body;
 
-  const { userId, search } = req.body;
+  let error = '';
 
-  var _search = search.trim();
-  
-  const db = client.db('Project');
-  const results = await db.collection('Cards').find({"Card":{$regex:_search+'.*', $options:'i'}}).toArray();
-  
-  var _ret = [];
-  for( var i=0; i<results.length; i++ )
-  {
-    _ret.push( results[i].Card );
+  try {
+    const db = client.db('Project');
+
+    const instructor = await db.collection('Users').findOne({UserID: instructorId, Role: TEACHER});
+
+    if (!instructor) {
+      error = `Instructor not found`;
+      return res.status(404).json({ error });
+    }
+
+    const instructorName = `${instructor.FirstName} ${instructor.LastName}`;
+
+    // Check if a class with this name already exists
+    const existingClass = await db.collection('Classes').findOne({
+      name: name,
+      section: section
+    });
+
+    if (existingClass) {
+      error = 'Class with this name and section already exists';
+      return res.status(400).json({ error });
+    }
+
+    const newClass = {
+      name: name,
+      classCode: classCode,
+      section: section,
+      daysOffered: daysOffered,
+      startTime: startTime,
+      endTime: endTime,
+      duration: duration,
+      instructorId: instructorId,
+      instructorName: instructorName,
+      studentList: [],
+      currentAttendance: null, 
+      deviceName: null,
+      secret: null,
+    };
+
+    // Insert the new class
+    const result = await db.collection('Classes').insertOne(newClass);
+
+    // Store the inserted document's ObjectID
+    const classId = result.insertedId;
+    console.log("New class created with ID:", classId);
+    
+    // Add class to instructor's classList
+    await db.collection('Users').updateOne(
+      { UserID: instructorId },
+      { $push: { classList: classId } }
+    );
+
+    // Successful creation
+    res.status(200).json({ 
+      error: ''
+    });
+
+  } catch (e) {
+    error = e.toString();
+    res.status(500).json({ error });
   }
-  
-  var ret = {results:_ret, error:error};
-  res.status(200).json(ret);
 });
+
+app.post('/api/fetchclasses', async (req, res, next) => {
+  // incoming: userId
+  // outgoing: classes, error
+
+  const { userId } = req.body;
+
+  let error = '';
+
+  try {
+    const db = client.db('Project');
+    let classes = [];
+
+    const user = await db.collection('Users').findOne({UserID: userId});
+
+    if (!user) {
+      error = `User not found ${userId}`;
+      return res.status(404).json({ error, classes: [] });
+    }
+
+    const role = user.Role;
+
+    if (role === TEACHER) {
+      // If teacher, find classes where instructorId matches
+      classes = await db.collection('Classes').find({
+        instructorId: userId
+      }).toArray();
+    } else if (role === STUDENT) {
+      // If student, find classes where userId is in studentList
+      classes = await db.collection('Classes').find({
+        'studentList.UserID': user._id
+      }).toArray();
+    } else {
+      error = `Invalid role ${role}`;
+      return res.status(400).json({ error, classes: [] });
+    }
+
+    res.status(200).json({ 
+      error: '',
+      classes: classes
+    });
+
+  } catch (e) {
+    error = e.toString();
+    res.status(500).json({ error, classes: [] });
+  }
+});
+
+app.post('/api/joinclass', async (req, res, next) => {
+  // incoming: userId, class code, section
+  // outgoing: error
+
+  const { userId, classCode, section } = req.body;
+
+  let error = '';
+
+  try {
+    const db = client.db('Project');
+
+    // Find the class by classCode
+    const classToJoin = await db.collection('Classes').findOne({ classCode: classCode, section: section });
+    if (!classToJoin) {
+      error = 'Class not found';
+      return res.status(404).json({ error });
+    }
+
+    const user = await db.collection('Users').findOne({UserID: userId});
+    if (!user) {
+      error = `User not found ${userId}`;
+      return res.status(404).json({ error });
+    }
+
+    if (user.Role !== STUDENT) {
+      error = 'Only students can join classes';
+      return res.status(403).json({ error });
+    }
+
+    // Check if userId is already in the studentList
+    const isUserInClass = classToJoin.studentList.some(student => student.UserID === user._id);
+
+    if (isUserInClass) {
+      error = 'User already in class';
+      return res.status(400).json({ error });
+    }
+
+    // Add user to class studentList
+    await db.collection('Classes').updateOne(
+      { _id: classToJoin._id },
+      { $push: { studentList: { UserID: user._id } } }
+    );
+
+    // Add class to user's classList
+    await db.collection('Users').updateOne(
+      { UserID: userId },
+      { $push: { classList: classToJoin._id } }
+    );
+
+
+    res.status(200).json({ error: '' });
+
+  } catch (e) {
+    error = e.toString()
+    res.status(500).json({ error })
+  }
+
+});
+
 
 process.on('SIGTERM', () => {
   console.log('Received SIGTERM. Shutting down server...');

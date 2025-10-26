@@ -1,8 +1,8 @@
-import styles from '../css/PageHeader.module.css';
+import { redirect, type href } from 'react-router-dom';
+import styles from '../css/ClassDetailsHeader.module.css';
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 
-function PageHeader() {
+function ClassDetailsHeader() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState('');
   const [userRole, setUserRole] = useState('');
@@ -15,31 +15,31 @@ function PageHeader() {
       const user = JSON.parse(userData);
       setIsLoggedIn(true);
       setUserName(user.firstName || 'User');
-      setUserRole(user.role || '');
+      setUserRole(user.role || 'student');
     }
   }, []);
 
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    localStorage.removeItem('user_data');
-    setIsLoggedIn(false);
-    navigate('/');
-  };
-
+  let redir = '/classes';
+  if(userRole === "teacher"){
+    redir = '/classes';
+  }
+  else if(userRole === "student"){
+    redir = '/classes';
+  }
   return (
     <header className={styles.header}>
       <div className={styles.content}>
         <img 
-          src="/logo.png" 
-          alt="Logo" 
-          className={styles.logo}
+            src="/backarrow.png" 
+            alt="Back Arrow" 
+            className={styles.logo}
+            onClick={() => { window.location.href = redir; }}
         />
         <h1 className={styles.title}>
-          bHere@UCF
+          Go Back to Class List
         </h1>
         
-        <nav className={styles.nav}>
+        {/* <nav className={styles.nav}>
           {!isLoggedIn ? (
             // Show when NOT logged in
             <>
@@ -50,18 +50,14 @@ function PageHeader() {
             // Show when logged in
             <>
               <span className={styles.welcomeText}>Welcome, {userName}!</span>
-              {userRole === 'student' ? (
-                <button onClick={() => navigate('/joinClass')} className={styles.navButton}>Join a Class</button>
-              ) : (
-                <button onClick={() => navigate('/addClass')} className={styles.navButton}>Add a Class</button>
-              )}
+              <a href="/cards" className={styles.navButton}>Add a Class</a>
               <button onClick={handleLogout} className={styles.navButton}>Logout</button>
             </>
           )}
-        </nav>
+        </nav> */}
       </div>
     </header>
   );
 }
 
-export default PageHeader;
+export default ClassDetailsHeader;

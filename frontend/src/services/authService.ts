@@ -1,10 +1,13 @@
 // Shared authentication functions
+import { buildPath } from "./buildPath";
 
 export async function loginUser(loginName: string, password: string) {
     const obj = { login: loginName, password: password };
     const js = JSON.stringify(obj);
+    const url = buildPath('api/login');
+    console.log('Login URL:', url); // Debug
 
-    const response = await fetch('http://localhost:5000/api/login', {
+    const response = await fetch(url, {
         method: 'POST',
         body: js,
         headers: { 'Content-Type': 'application/json' }
@@ -39,8 +42,10 @@ export async function registerUser(
 ) {
     const obj = { email, password, firstName, lastName, id, role };
     const js = JSON.stringify(obj);
+    const url = buildPath('api/register');
+    console.log('Register URL:', url); // Debug
 
-    const response = await fetch('http://localhost:5000/api/register', {
+    const response = await fetch(url, {
         method: 'POST',
         body: js,
         headers: { 'Content-Type': 'application/json' }
