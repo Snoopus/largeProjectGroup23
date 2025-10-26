@@ -51,7 +51,7 @@ function PageHeader() {
             <>
               <span className={styles.welcomeText}>Welcome, {userName}!</span>
               {userRole === 'student' ? (
-                <button onClick={() => navigate('/joinclass')} className={styles.navButton}>Join a Class</button>
+                <button onClick={() => navigate('/joinClass')} className={styles.navButton}>Join a Class</button>
               ) : (
                 <button onClick={() => navigate('/addClass')} className={styles.navButton}>Add a Class</button>
               )}

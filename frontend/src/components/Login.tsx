@@ -28,11 +28,12 @@ function Login()
                     return;
                 }
                 else {
-                    window.location.href = '/download';
+                    window.location.href = '/classes';
                     return;
                 }
+                //window.location.href = '/classes';
             }
-            window.location.href = '/download';
+            window.location.href = '/';
         }
         catch(error:any)
         {

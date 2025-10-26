@@ -262,7 +262,7 @@ app.post('/api/fetchclasses', async (req, res, next) => {
     } else if (role === STUDENT) {
       // If student, find classes where userId is in studentList
       classes = await db.collection('Classes').find({
-        'studentList.UserID': userId
+        'studentList.UserID': user._id
       }).toArray();
     } else {
       error = `Invalid role ${role}`;
@@ -281,18 +281,18 @@ app.post('/api/fetchclasses', async (req, res, next) => {
 });
 
 app.post('/api/joinclass', async (req, res, next) => {
-  // incoming: userId, name, section
+  // incoming: userId, class code, section
   // outgoing: error
 
-  const { userId, name, section } = req.body;
+  const { userId, classCode, section } = req.body;
 
   let error = '';
 
   try {
     const db = client.db('Project');
 
-    // Find the class by name
-    const classToJoin = await db.collection('Classes').findOne({ name: name, section: section });
+    // Find the class by classCode
+    const classToJoin = await db.collection('Classes').findOne({ classCode: classCode, section: section });
     if (!classToJoin) {
       error = 'Class not found';
       return res.status(404).json({ error });
@@ -310,7 +310,7 @@ app.post('/api/joinclass', async (req, res, next) => {
     }
 
     // Check if userId is already in the studentList
-    const isUserInClass = classToJoin.studentList.some(student => student.UserID === userId);
+    const isUserInClass = classToJoin.studentList.some(student => student.UserID === user._id);
 
     if (isUserInClass) {
       error = 'User already in class';

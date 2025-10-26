@@ -19,12 +19,12 @@ function ClassDetailsHeader() {
     }
   }, []);
 
-  let redir = '/download';
+  let redir = '/classes';
   if(userRole === "teacher"){
     redir = '/classes';
   }
   else if(userRole === "student"){
-    redir = '/download';
+    redir = '/classes';
   }
   return (
     <header className={styles.header}>

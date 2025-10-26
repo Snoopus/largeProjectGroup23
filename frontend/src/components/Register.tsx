@@ -37,14 +37,15 @@ function Register() {
             await loginUser(email, password);
             
             setMessage('Registration successful!');
-            if(role === TEACHER) {
-                window.location.href = '/classes';
-                return;
-            }
-            else {
-                window.location.href = '/download';
-                return;
-            }
+            // if(role === TEACHER) {
+            //     window.location.href = '/classes';
+            //     return;
+            // }
+            // else {
+            //     window.location.href = '/download';
+            //     return;
+            // }
+            window.location.href = '/classes';
         }
         catch (error: any) {
             setMessage(error.message || 'Registration failed');
