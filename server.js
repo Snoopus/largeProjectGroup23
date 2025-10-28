@@ -49,6 +49,17 @@ app.use((req, res, next) =>
     );
     next();
 });
+
+// Helper function to validate inputs
+// Returns true if all provided values are valid (not null, undefined, or empty string)
+function areInputsValid(...values) {
+  return values.every(value => {
+    if (value === null || value === undefined) return false;
+    if (typeof value === 'string' && value.trim() === '') return false;
+    return true;
+  });
+}
+
 //app.listen(5000); // start Node + Express server on port 5000
 const PORT = process.env.PORT || 5000;
 const server = app.listen(PORT, '0.0.0.0', () => {
@@ -60,30 +71,42 @@ const server = app.listen(PORT, '0.0.0.0', () => {
 app.post('/api/login', async (req, res, next) => 
 {
   // incoming: login, password
-  // outgoing: id, firstName, lastName, error
+  // outgoing: id, firstName, lastName, error, role
 
   var error = '';
 
   const { login, password } = req.body;
-
-  const db = client.db('Project');
-  const results = await db.collection('Users').find({login:login,password:password}).toArray();
 
   var id = -1;
   var fn = '';
   var ln = '';
   var role = '';
 
-  if( results.length > 0 )
-  {
-    id = results[0].UserID;
-    fn = results[0].FirstName;
-    ln = results[0].LastName;
-    role = results[0].Role;
+  // Validate inputs
+  if (!areInputsValid(login, password)) {
+    error = 'Invalid or missing fields';
+    return res.status(400).json({ id:id, firstName:fn, lastName:ln, error:error, role: role });
   }
 
-  var ret = { id:id, firstName:fn, lastName:ln, error:'', role: role};
-  res.status(200).json(ret);
+  try {
+    const db = client.db('Project');
+    const results = await db.collection('Users').find({login:login,password:password}).toArray();
+
+    if( results.length > 0 )
+    {
+      id = results[0].UserID;
+      fn = results[0].FirstName;
+      ln = results[0].LastName;
+      role = results[0].Role;
+    }
+
+    var ret = { id:id, firstName:fn, lastName:ln, error:'', role: role};
+    res.status(200).json(ret);
+
+  } catch (e) {
+    error = e.toString();
+    res.status(500).json({ id:id, firstName:fn, lastName:ln, error:error, role: role });
+  }
 });
 
 
@@ -93,6 +116,12 @@ app.post('/api/register', async (req, res, next) =>
   // outgoing: error
 
   const { email, password, firstName, lastName, id, role } = req.body;
+
+  // Validate inputs
+  if (!areInputsValid(email, password, firstName, lastName, id, role)) {
+    const error = 'Invalid or missing fields';
+    return res.status(400).json({ error });
+  }
 
   const newUser = {
     login:email, 
@@ -139,12 +168,18 @@ app.post('/api/register', async (req, res, next) =>
 
 
 app.post('/api/createclass', async (req, res, next) => {
-  // incoming: name, duration, instructorId, section, daysOffered, startTime, endTime
-  // outgoing: error, class ObjectID
+  // incoming: name, duration, instructorId, section, daysOffered, startTime, endTime, classCode
+  // outgoing: error, classId
 
   const { name, duration, instructorId, section, daysOffered, startTime, endTime, classCode } = req.body;
 
   let error = '';
+
+  // Validate inputs
+  if (!areInputsValid(name, duration, instructorId, section, daysOffered, startTime, endTime, classCode)) {
+    error = 'Invalid or missing fields';
+    return res.status(400).json({ error });
+  }
 
   try {
     const db = client.db('Project');
@@ -190,7 +225,6 @@ app.post('/api/createclass', async (req, res, next) => {
 
     // Store the inserted document's ObjectID
     const classId = result.insertedId;
-    console.log("New class created with ID:", classId);
     
     // Add class to instructor's classList
     await db.collection('Users').updateOne(
@@ -200,7 +234,8 @@ app.post('/api/createclass', async (req, res, next) => {
 
     // Successful creation
     res.status(200).json({ 
-      error: ''
+      error: '',
+      classId: classId.toString()
     });
 
   } catch (e) {
@@ -217,6 +252,12 @@ app.post('/api/fetchclasses', async (req, res, next) => {
 
   let error = '';
 
+  // Validate inputs
+  if (!areInputsValid(userId)) {
+    error = 'Invalid or missing fields';
+    return res.status(400).json({ error, classes: [] });
+  }
+
   try {
     const db = client.db('Project');
     let classes = [];
@@ -228,21 +269,13 @@ app.post('/api/fetchclasses', async (req, res, next) => {
       return res.status(404).json({ error, classes: [] });
     }
 
-    const role = user.Role;
+    const classIds = user.classList || [];
 
-    if (role === TEACHER) {
-      // If teacher, find classes where instructorId matches
-      classes = await db.collection('Classes').find({
-        instructorId: userId
-      }).toArray();
-    } else if (role === STUDENT) {
-      // If student, find classes where userId is in studentList
-      classes = await db.collection('Classes').find({
-        'studentList.UserID': user._id
-      }).toArray();
-    } else {
-      error = `Invalid role ${role}`;
-      return res.status(400).json({ error, classes: [] });
+    // Fetch all classes in a single query using $in operator
+    if (classIds.length > 0) {
+      // Convert all classIds to ObjectId instances
+      const objectIds = classIds.map(id => new ObjectId(id));
+      classes = await db.collection('Classes').find({ _id: { $in: objectIds } }).toArray();
     }
 
     res.status(200).json({ 
@@ -257,12 +290,18 @@ app.post('/api/fetchclasses', async (req, res, next) => {
 });
 
 app.post('/api/joinclass', async (req, res, next) => {
-  // incoming: userId, class code, section
+  // incoming: userId, classCode, section
   // outgoing: error
 
   const { userId, classCode, section } = req.body;
 
   let error = '';
+
+  // Validate inputs
+  if (!areInputsValid(userId, classCode, section)) {
+    error = 'Invalid or missing fields';
+    return res.status(400).json({ error });
+  }
 
   try {
     const db = client.db('Project');
