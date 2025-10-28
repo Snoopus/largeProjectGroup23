@@ -22,17 +22,20 @@ const client = new MongoClient(url, {
 });
 //client.connect();
 
-async function run() {
-  try {
-    await client.connect();
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
-  } finally {
-    // Ensures that the client will close when you finish/error
-    // await client.close();
+// Only run server setup if not in test environment
+if (process.env.NODE_ENV !== 'test') {
+  async function run() {
+    try {
+      await client.connect();
+      await client.db("admin").command({ ping: 1 });
+      console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    } finally {
+      // Ensures that the client will close when you finish/error
+      // await client.close();
+    }
   }
+  run().catch(console.dir);
 }
-run().catch(console.dir);
 
 app.use(cors());
 app.use(express.json());
@@ -61,10 +64,14 @@ function areInputsValid(...values) {
 }
 
 //app.listen(5000); // start Node + Express server on port 5000
-const PORT = process.env.PORT || 5000;
-const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on port ${PORT} and accessible from all network interfaces`);
-});
+// Only start server if not in test environment
+let server;
+if (process.env.NODE_ENV !== 'test') {
+  const PORT = process.env.PORT || 5000;
+  server = app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on port ${PORT} and accessible from all network interfaces`);
+  });
+}
 
 
 
@@ -358,19 +365,24 @@ app.post('/api/joinclass', async (req, res, next) => {
 process.on('SIGTERM', () => {
   console.log('Received SIGTERM. Shutting down server...');
   client.close();
-  server.close(() => {
-    console.log('Server closed');
-    process.exit(0);
-  });
+  if (server) {
+    server.close(() => {
+      console.log('Server closed');
+      process.exit(0);
+    });
+  }
 });
 
 process.on('SIGINT', () => {
   console.log('Received SIGINT. Shutting down server...');
   client.close();
-  server.close(() => {
-    console.log('Server closed');
-    process.exit(0);
-  });
+  if (server) {
+    server.close(() => {
+      console.log('Server closed');
+      process.exit(0);
+    });
+  }
 });
 
 
+module.exports = app; // Export the Express app for testing purposes
