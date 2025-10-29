@@ -362,6 +362,100 @@ app.post('/api/joinclass', async (req, res, next) => {
 });
 
 
+app.post('/api/preparebroadcast', async (req, res, next) => {
+  // incoming: userId, classCode, section, deviceName
+  // outgoing: error
+
+  const { userId, classCode, section, deviceName } = req.body;
+
+  let error = '';
+
+  // Validate inputs
+  if (!areInputsValid(userId, classCode, section, deviceName)) {
+    error = 'Invalid or missing fields';
+    return res.status(400).json({ error });
+  }
+
+  try {
+    const db = client.db('Project');
+
+    const classToBroadcast = await db.collection('Classes').findOne({ classCode: classCode, section: section });
+    if (!classToBroadcast) {
+      error = 'Class not found';
+      return res.status(404).json({ error });
+    }
+
+    // Realistically, better user verification should be performed here (JWT may handle)
+    if (classToBroadcast.instructorId !== userId) {
+      error = 'Only the instructor can prepare a broadcast';
+      return res.status(403).json({ error });
+    }
+
+    classToBroadcast.deviceName = deviceName;
+    
+    // CREATE NEW RECORD HERE ONCE RECORD SCHEMA HAS BEEN DETERMINED
+
+    await db.collection('Classes').updateOne(
+      { _id: classToBroadcast._id },
+      { $set: { deviceName: deviceName } }
+    );
+
+    res.status(200).json({ error: '' });
+
+  } catch (e) {
+    error = e.toString()
+    res.status(500).json({ error })
+  }
+
+});
+
+
+app.post('/api/endbroadcast', async (req, res, next) => {
+  // incoming: userId, classCode, section
+  // outgoing: error
+
+  const { userId, classCode, section } = req.body;
+
+  let error = '';
+
+  // Validate inputs
+  if (!areInputsValid(userId, classCode, section)) {
+    error = 'Invalid or missing fields';
+    return res.status(400).json({ error });
+  }
+
+  try {
+    const db = client.db('Project');
+
+    const classToEnd = await db.collection('Classes').findOne({ classCode: classCode, section: section });
+    if (!classToEnd) {
+      error = 'Class not found';
+      return res.status(404).json({ error });
+    }
+
+    // Realistically, better user verification should be performed here (JWT may handle)
+    if (classToEnd.instructorId !== userId) {
+      error = 'Only the instructor can end a broadcast';
+      return res.status(403).json({ error });
+    }
+
+    classToEnd.deviceName = null;
+
+    // FINALIZE RECORD HERE ONCE RECORD SCHEMA HAS BEEN DETERMINED
+
+    await db.collection('Classes').updateOne(
+      { _id: classToEnd._id },
+      { $set: { deviceName: null } }
+    );
+
+    res.status(200).json({ error: '' });
+  } catch (e) {
+    error = e.toString()
+    res.status(500).json({ error })
+  }
+});
+
+
 process.on('SIGTERM', () => {
   console.log('Received SIGTERM. Shutting down server...');
   client.close();
