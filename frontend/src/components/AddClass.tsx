@@ -52,9 +52,42 @@ function AddClass()
         }
       }, []);
 
+    // Compute duration whenever start or end time changes
+    useEffect(() => {
+        if (startTime && endTime) {
+            const duration = calculateDuration(startTime, endTime);
+            setClassDuration(duration);
+        }
+    }, [startTime, endTime]);
+
+    // Calculate duration in minutes from start and end times (HH:MM format)
+    function calculateDuration(start: string, end: string): number {
+        if (!start || !end) return 0;
+        
+        // Parse time strings (format: "HH:MM")
+        const [startHours, startMinutes] = start.split(':').map(Number);
+        const [endHours, endMinutes] = end.split(':').map(Number);
+        
+        // Convert to total minutes
+        const startTotalMinutes = startHours * 60 + startMinutes;
+        const endTotalMinutes = endHours * 60 + endMinutes;
+        
+        // Calculate difference
+        let duration = endTotalMinutes - startTotalMinutes;
+        
+        // Handle case where end time is on the next day (e.g., night class)
+        if (duration < 0) {
+            duration += 24 * 60; // Add 24 hours worth of minutes
+        }
+        
+        return duration;
+    }
+
     async function confirmAddClass(event: React.FormEvent) : Promise<void>
         {
             event.preventDefault();
+
+            setClassDuration(calculateDuration(startTime, endTime));
 
             try {
                 // Create days string from selected days (e.g., "MWF" or "MTThF")
@@ -119,10 +152,10 @@ function AddClass()
                         <label className={styles.inputLabel} htmlFor="section">Section:</label>
                         <input type="text" id="section" placeholder="2" className={styles.textInput} onChange={handleSetSection} />
                     </div>
-                    <div id="classDurationInput" className={styles.inputRow}>
+                    {/* <div id="classDurationInput" className={styles.inputRow}>
                         <label className={styles.inputLabel} htmlFor="classDuration">Class Duration (minutes):</label>
                         <input type="number" id="classDuration" placeholder="Duration in minutes" className={styles.textInput} onChange={handleSetClassDuration} />
-                    </div>
+                    </div> */}
                     <div id="daysOfferedInput" className={styles.inputRow}>
                         <label className={styles.inputLabel}>Days Offered:</label>
                         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
