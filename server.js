@@ -200,14 +200,14 @@ app.post('/api/createclass', async (req, res, next) => {
 
     const instructorName = `${instructor.FirstName} ${instructor.LastName}`;
 
-    // Check if a class with this name already exists
+    // Check if a class with this classCode already exists
     const existingClass = await db.collection('Classes').findOne({
-      name: name,
+      classCode: classCode,
       section: section
     });
 
     if (existingClass) {
-      error = 'Class with this name and section already exists';
+      error = 'This class already exists';
       return res.status(400).json({ error });
     }
 
@@ -223,7 +223,6 @@ app.post('/api/createclass', async (req, res, next) => {
       instructorName: instructorName,
       studentList: [],
       currentAttendance: null, 
-      deviceName: null,
       secret: null,
     };
 
@@ -314,7 +313,10 @@ app.post('/api/joinclass', async (req, res, next) => {
     const db = client.db('Project');
 
     // Find the class by classCode
-    const classToJoin = await db.collection('Classes').findOne({ classCode: classCode, section: section });
+    const classToJoin = await db.collection('Classes').findOne({ 
+      classCode: classCode, 
+      section: section 
+    });
     if (!classToJoin) {
       error = 'Class not found';
       return res.status(404).json({ error });
@@ -361,17 +363,18 @@ app.post('/api/joinclass', async (req, res, next) => {
 
 });
 
-
+/*
+# Prepare Broadcast which has deviceName AND secret (not one only)
 app.post('/api/preparebroadcast', async (req, res, next) => {
-  // incoming: userId, classCode, section, deviceName
+  // incoming: userId, objectId, deviceName
   // outgoing: error
 
-  const { userId, classCode, section, deviceName } = req.body;
+  const { userId, objectId, deviceName } = req.body;
 
   let error = '';
 
   // Validate inputs
-  if (!areInputsValid(userId, classCode, section, deviceName)) {
+  if (!areInputsValid(userId, objectId, deviceName)) {
     error = 'Invalid or missing fields';
     return res.status(400).json({ error });
   }
@@ -379,7 +382,7 @@ app.post('/api/preparebroadcast', async (req, res, next) => {
   try {
     const db = client.db('Project');
 
-    const classToBroadcast = await db.collection('Classes').findOne({ classCode: classCode, section: section });
+    const classToBroadcast = await db.collection('Classes').findOne({ _id: objectId });
     if (!classToBroadcast) {
       error = 'Class not found';
       return res.status(404).json({ error });
@@ -396,9 +399,51 @@ app.post('/api/preparebroadcast', async (req, res, next) => {
     // CREATE NEW RECORD HERE ONCE RECORD SCHEMA HAS BEEN DETERMINED
 
     await db.collection('Classes').updateOne(
-      { _id: classToBroadcast._id },
+      { _id: objectId },
       { $set: { deviceName: deviceName } }
     );
+
+    res.status(200).json({ error: '' });
+
+  } catch (e) {
+    error = e.toString()
+    res.status(500).json({ error })
+  }
+
+});
+*/
+
+
+app.post('/api/preparebroadcast', async (req, res, next) => {
+  // incoming: userId, objectId
+  // outgoing: error
+
+  const { userId, objectId } = req.body;
+
+  let error = '';
+
+  // Validate inputs
+  if (!areInputsValid(userId, objectId)) {
+    error = 'Invalid or missing fields';
+    return res.status(400).json({ error });
+  }
+
+  try {
+    const db = client.db('Project');
+
+    const classToBroadcast = await db.collection('Classes').findOne({ _id: new ObjectId(objectId) });
+    if (!classToBroadcast) {
+      error = 'Class not found';
+      return res.status(404).json({ error });
+    }
+
+    // Realistically, better user verification should be performed here (JWT may handle)
+    if (classToBroadcast.instructorId !== userId) {
+      error = 'Only the instructor can prepare a broadcast';
+      return res.status(403).json({ error });
+    }
+    
+    // CREATE NEW RECORD HERE ONCE RECORD SCHEMA HAS BEEN DETERMINED
 
     res.status(200).json({ error: '' });
 
@@ -411,15 +456,15 @@ app.post('/api/preparebroadcast', async (req, res, next) => {
 
 
 app.post('/api/endbroadcast', async (req, res, next) => {
-  // incoming: userId, classCode, section
+  // incoming: userId, objectId
   // outgoing: error
 
-  const { userId, classCode, section } = req.body;
+  const { userId, objectId } = req.body;
 
   let error = '';
 
   // Validate inputs
-  if (!areInputsValid(userId, classCode, section)) {
+  if (!areInputsValid(userId, objectId)) {
     error = 'Invalid or missing fields';
     return res.status(400).json({ error });
   }
@@ -427,7 +472,8 @@ app.post('/api/endbroadcast', async (req, res, next) => {
   try {
     const db = client.db('Project');
 
-    const classToEnd = await db.collection('Classes').findOne({ classCode: classCode, section: section });
+    // Convert objectId string to ObjectId
+    const classToEnd = await db.collection('Classes').findOne({ _id: new ObjectId(objectId) });
     if (!classToEnd) {
       error = 'Class not found';
       return res.status(404).json({ error });
@@ -439,14 +485,153 @@ app.post('/api/endbroadcast', async (req, res, next) => {
       return res.status(403).json({ error });
     }
 
-    classToEnd.deviceName = null;
+    // classToEnd.deviceName = null;
 
     // FINALIZE RECORD HERE ONCE RECORD SCHEMA HAS BEEN DETERMINED
 
+    // await db.collection('Classes').updateOne(
+    //   { _id: new ObjectId(objectId) },
+    //   { $set: { deviceName: null } }
+    // );
+
+    res.status(200).json({ error: '' });
+  } catch (e) {
+    error = e.toString()
+    res.status(500).json({ error })
+  }
+});
+
+
+app.post('/api/newsecret', async (req, res, next) => {
+  // incoming: userId, objectId, secret
+  // outgoing: error
+
+  const { userId, objectId, secret } = req.body;
+
+  let error = '';
+
+  // Validate inputs
+  if (!areInputsValid(userId, objectId, secret)) {
+    error = 'Invalid or missing fields';
+    return res.status(400).json({ error });
+  }
+
+  try {
+    const db = client.db('Project');
+
+    // Convert objectId string to ObjectId
+    const classToUpdate = await db.collection('Classes').findOne({ _id: new ObjectId(objectId) });
+    if (!classToUpdate) {
+      error = 'Class not found';
+      return res.status(404).json({ error });
+    }
+
+    // Realistically, better user verification should be performed here (JWT may handle)
+    if (classToUpdate.instructorId !== userId) {
+      error = 'Only the instructor can update the secret';
+      return res.status(403).json({ error });
+    }
+
     await db.collection('Classes').updateOne(
-      { _id: classToEnd._id },
-      { $set: { deviceName: null } }
+      { _id: new ObjectId(objectId) },
+      { $set: { secret: secret } }
     );
+
+    res.status(200).json({ error: '' });
+  } catch (e) {
+    error = e.toString()
+    res.status(500).json({ error })
+  }
+});
+
+
+app.post('/api/removesecret', async (req, res, next) => {
+  // incoming: userId, objectId
+  // outgoing: error
+
+  const { userId, objectId } = req.body;
+
+  let error = '';
+
+  // Validate inputs
+  if (!areInputsValid(userId, objectId)) {
+    error = 'Invalid or missing fields';
+    return res.status(400).json({ error });
+  }
+
+  try {
+    const db = client.db('Project');
+
+    const classToUpdate = await db.collection('Classes').findOne({ _id: new ObjectId(objectId) });
+
+    if (!classToUpdate) {
+      error = 'Class not found';
+      return res.status(404).json({ error });
+    }
+
+    // Realistically, better user verification should be performed here (JWT may handle)
+    if (classToUpdate.instructorId !== userId) {
+      error = 'Only the instructor can remove the secret';
+      return res.status(403).json({ error });
+    }
+
+    await db.collection('Classes').updateOne(
+      { _id: new ObjectId(objectId) },
+      { $set: { secret: null } }
+    );
+
+    res.status(200).json({ error: '' });
+  } catch (e) {
+    error = e.toString()
+    res.status(500).json({ error })
+  }
+});
+
+
+app.post('/api/markmehere', async (req, res, next) => {
+  // incoming: userId, objectId, secret
+  // outgoing: error
+
+  const { userId, objectId, secret } = req.body;
+
+  let error = '';
+
+  // Validate inputs
+  if (!areInputsValid(userId, objectId, secret)) {
+    error = 'Invalid or missing fields';
+    return res.status(400).json({ error });
+  }
+
+  try {
+    const db = client.db('Project');
+
+    const classToUpdate = await db.collection('Classes').findOne({ _id: new ObjectId(objectId) });
+    if (!classToUpdate) {
+      error = 'Class not found';
+      return res.status(404).json({ error });
+    }
+
+    // Realistically, better user verification should be performed here (JWT may handle)
+    const userToMarkPresent = await db.collection('Users').findOne({UserID: userId});
+    if (!userToMarkPresent) {
+      error = `User not found ${userId}`;
+      return res.status(404).json({ error });
+    }
+    
+    // Check if user is in the class studentList
+    const isUserInClass = classToUpdate.studentList.some(student => student.UserID.equals(userToMarkPresent._id));
+    if (!isUserInClass) {
+      error = 'User not in class';
+      return res.status(403).json({ error });
+    }
+
+    // Check if secret matches
+    if (classToUpdate.secret !== secret) {
+      error = 'Invalid secret';
+      return res.status(403).json({ error });
+    }
+
+    // UPDATE RECORD WITH STUDENT BEING HERE
 
     res.status(200).json({ error: '' });
   } catch (e) {
