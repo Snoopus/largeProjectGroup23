@@ -8,6 +8,7 @@ import AppDownloadPage from "./pages/AppDownloadPage";
 import ClassDetailsPage from "./pages/ClassDetailsPage";
 import AddClassPage from "./pages/AddClassPage";
 import JoinClassPage from "./pages/joinClassPage";
+import EnterCodePage from "./pages/EnterCodePage";  
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <Route path="/download" element={<AppDownloadPage />} />
         <Route path="/addClass" element={<AddClassPage />} />
         <Route path="/joinClass" element={<JoinClassPage />} />
+        <Route path="/verification" element={<EnterCodePage />} />
       </Routes>
     </BrowserRouter>
   );
