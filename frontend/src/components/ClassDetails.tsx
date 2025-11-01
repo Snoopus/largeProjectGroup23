@@ -70,7 +70,7 @@ function ClassDetails() {
                 _id: "6903def7dfe0107f232a9484",
                 classId: classId || "",
                 instructorId: "68fe8150529fd9e4bb5d9731",
-                startTime: "2025-09-08T16:00:00.000Z",
+                startTime: "2025-09-08T17:00:00.000Z",
                 active: false,
                 totalPings: 5,
                 pingsCollected: {
@@ -125,52 +125,102 @@ function ClassDetails() {
 
     const renderTeacherView = (record: AttendanceRecord) => {
         const isExpanded = expandedRecords.has(record._id);
+        const date = new Date(record.startTime);
+        const dateStr = date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+        const timeStr = date.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
         
         return (
-            <tr key={record._id}>
-                <td>{formatDate(record.startTime)}</td>
-                <td>{record.totalPings}</td>
-                <td>
-                    <button 
-                        onClick={() => toggleExpanded(record._id)}
-                        className={styles.dropdownButton}
-                    >
-                        {isExpanded ? '▼ Hide Students' : '▶ Show Students'}
-                    </button>
-                    {isExpanded && (
-                        <div className={styles.studentDropdown}>
-                            <table className={styles.nestedTable}>
-                                <thead>
-                                    <tr>
-                                        <th>Student ID</th>
-                                        <th>Pings</th>
+            <div key={record._id} className={styles.recordCard}>
+                <table className={styles.recordTable}>
+                    <thead>
+                        <tr className={styles.headerRow}>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Total Pings</th>
+                            <th>
+                                <button 
+                                    onClick={() => toggleExpanded(record._id)}
+                                    className={styles.expandButton}
+                                >
+                                    {isExpanded ? '▼ Hide Students' : '▶ Show Students'}
+                                </button>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr className={styles.dataRow}>
+                            <td>{dateStr}</td>
+                            <td>{timeStr}</td>
+                            <td>{record.totalPings}</td>
+                            <td></td>
+                        </tr>
+                    </tbody>
+                </table>
+                {isExpanded && (
+                    <div className={styles.studentList}>
+                        <table className={styles.studentTable}>
+                            <thead>
+                                <tr>
+                                    <th>Student ID</th>
+                                    <th>Pings</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {Object.entries(record.pingsCollected).map(([studentId, pings]) => (
+                                    <tr key={studentId}>
+                                        <td>{studentId}</td>
+                                        <td>{pings}</td>
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    {Object.entries(record.pingsCollected).map(([studentId, pings]) => (
-                                        <tr key={studentId}>
-                                            <td>{studentId}</td>
-                                            <td>{pings}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
-                </td>
-            </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
         );
     };
 
     const renderStudentView = (record: AttendanceRecord) => {
         const studentPings = record.pingsCollected[userId] ?? 0;
+        const date = new Date(record.startTime);
+        const dateStr = date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+        const timeStr = date.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
         
         return (
-            <tr key={record._id}>
-                <td>{formatDate(record.startTime)}</td>
-                <td>{userId}</td>
-                <td>{studentPings}</td>
-            </tr>
+            <div key={record._id} className={styles.recordCard}>
+                <table className={styles.recordTable}>
+                    <thead>
+                        <tr className={styles.headerRow}>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Your Student ID</th>
+                            <th>Your Pings</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr className={styles.dataRow}>
+                            <td>{dateStr}</td>
+                            <td>{timeStr}</td>
+                            <td>{userId}</td>
+                            <td>{studentPings}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         );
     };
 
@@ -189,31 +239,13 @@ function ClassDetails() {
             {records.length === 0 ? (
                 <p>No attendance records found.</p>
             ) : (
-                <table className={styles.attendanceTable}>
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            {userRole === 'teacher' ? (
-                                <>
-                                    <th>Total Pings</th>
-                                    <th>Student Details</th>
-                                </>
-                            ) : (
-                                <>
-                                    <th>Your Student ID</th>
-                                    <th>Your Pings</th>
-                                </>
-                            )}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {records.map(record => 
-                            userRole === 'teacher' 
-                                ? renderTeacherView(record)
-                                : renderStudentView(record)
-                        )}
-                    </tbody>
-                </table>
+                <div className={styles.recordsContainer}>
+                    {records.map(record => 
+                        userRole === 'teacher' 
+                            ? renderTeacherView(record)
+                            : renderStudentView(record)
+                    )}
+                </div>
             )}
         </div>
     );

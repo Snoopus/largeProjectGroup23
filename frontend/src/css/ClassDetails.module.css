@@ -31,7 +31,7 @@
 
 .container {
     padding: 80px 20px 20px 20px;
-    max-width: 1200px;
+    max-width: 2400px;
     margin: 0 auto;
     color: #ffffff;
 }
@@ -42,91 +42,110 @@
     font-size: 18px;
 }
 
-.attendanceTable {
+.recordsContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.recordCard {
     width: 100%;
-    border-collapse: collapse;
     background-color: #1a1a1a;
+    border: 2px solid #ffc904;
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.attendanceTable thead {
+.recordCard:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(255, 201, 4, 0.3);
+}
+
+.recordTable {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.headerRow {
     background-color: #ffc904;
     color: #000000;
 }
 
-.attendanceTable th,
-.attendanceTable td {
-    padding: 15px;
+.headerRow th {
+    padding: 15px 20px;
     text-align: left;
-    border-bottom: 1px solid #333;
-}
-
-.attendanceTable th {
     font-weight: bold;
     text-transform: uppercase;
     font-size: 14px;
 }
 
-.attendanceTable tbody tr {
-    transition: background-color 0.2s ease;
+.dataRow td {
+    padding: 15px 20px;
+    text-align: left;
+    font-size: 16px;
+    color: #ffffff;
 }
 
-.attendanceTable tbody tr:hover {
-    background-color: #2a2a2a;
-}
-
-.attendanceTable tbody tr:last-child td {
-    border-bottom: none;
-}
-
-.dropdownButton {
-    background-color: #ffc904;
-    color: #000000;
-    border: none;
+.expandButton {
+    background-color: #000000;
+    color: #ffc904;
+    border: 2px solid #ffc904;
     padding: 8px 16px;
     border-radius: 5px;
     cursor: pointer;
     font-weight: bold;
-    transition: background-color 0.3s ease;
+    transition: all 0.3s ease;
+    font-size: 14px;
 }
 
-.dropdownButton:hover {
-    background-color: #e6b700;
+.expandButton:hover {
+    background-color: #ffc904;
+    color: #000000;
 }
 
-.studentDropdown {
-    margin-top: 15px;
-    padding: 10px;
-    background-color: #2a2a2a;
-    border-radius: 5px;
-    border: 1px solid #ffc904;
+.studentList {
+    width: 100%;
+    background-color: #0a0a0a;
+    border-top: 2px solid #ffc904;
+    padding: 0;
 }
 
-.nestedTable {
+.studentTable {
     width: 100%;
     border-collapse: collapse;
-    background-color: transparent;
 }
 
-.nestedTable thead {
-    background-color: #333;
+.studentTable thead {
+    background-color: #2a2a2a;
     color: #ffc904;
 }
 
-.nestedTable th,
-.nestedTable td {
-    padding: 10px;
+.studentTable th {
+    padding: 12px 20px;
     text-align: left;
-    border-bottom: 1px solid #444;
+    font-weight: bold;
+    font-size: 13px;
+    text-transform: uppercase;
 }
 
-.nestedTable tbody tr:hover {
-    background-color: #3a3a3a;
+.studentTable td {
+    padding: 12px 20px;
+    text-align: left;
+    border-bottom: 1px solid #333;
+    color: #ffffff;
 }
 
-.nestedTable tbody tr:last-child td {
+.studentTable tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+.studentTable tbody tr:hover {
+    background-color: #1a1a1a;
+}
+
+.studentTable tbody tr:last-child td {
     border-bottom: none;
 }
 
