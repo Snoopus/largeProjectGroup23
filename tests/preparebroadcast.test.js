@@ -7,36 +7,26 @@ let client;
 let jestClassId;
 
 // Test data
-const jestStudent = {
-  login: 'jeststudent@test.com',
-  password: 'JestStudentPass123',
-  FirstName: 'Jest',
-  LastName: 'Student',
-  UserID: 99993,
-  Role: 'student',
-  classList: []
-};
-
 const jestTeacher = {
-  login: 'jestteacher2@test.com',
+  login: 'jestteacher6@test.com',
   password: 'JestTeacherPass123',
   FirstName: 'Jest',
-  LastName: 'Teacher2',
-  UserID: 99994,
+  LastName: 'Teacher6',
+  UserID: 99998,
   Role: 'teacher',
   classList: []
 };
 
 const jestClass = {
-  name: 'Jest Join Class',
-  classCode: 'JEST201',
+  name: 'Jest Broadcast Class',
+  classCode: 'JEST601',
   section: 'A',
-  daysOffered: ['Monday', 'Wednesday'],
-  startTime: '10:00',
-  endTime: '11:00',
+  daysOffered: ['Tuesday', 'Thursday'],
+  startTime: '15:00',
+  endTime: '16:00',
   duration: 60,
-  instructorId: 99994,
-  instructorName: 'Jest Teacher2',
+  instructorId: 99998,
+  instructorName: 'Jest Teacher6',
   studentList: [],
   currentAttendance: null,
   secret: null
@@ -50,95 +40,106 @@ beforeAll(async () => {
   db = client.db('Project');
 
   // Insert test data
-  await db.collection('Users').insertOne(jestStudent);
-  await db.collection('Users').insertOne(jestTeacher);
   const classResult = await db.collection('Classes').insertOne(jestClass);
   jestClassId = classResult.insertedId;
+  
+  jestTeacher.classList = [jestClassId];
+  await db.collection('Users').insertOne(jestTeacher);
 });
 
 afterAll(async () => {
-  // Clean up test data - only delete specific test users and classes
+  // Clean up test data - only delete specific test user, classes, and any attendance records created
   await db.collection('Users').deleteMany({ 
-    UserID: { $in: [jestStudent.UserID, jestTeacher.UserID] }
+    UserID: jestTeacher.UserID
   });
   await db.collection('Classes').deleteMany({ 
     instructorId: jestTeacher.UserID
+  });
+  // Clean up any Records created during preparebroadcast test
+  await db.collection('Records').deleteMany({
+    classId: jestClassId
   });
   
   await client.close();
   await new Promise(resolve => setTimeout(resolve, 500));
 });
 
-test('joinclass with missing userId returns 400', async () => {
+test('preparebroadcast with missing userId returns 400', async () => {
   const response = await request(app)
-    .post('/api/joinclass')
+    .post('/api/preparebroadcast')
     .send({
-      classCode: 'JEST201',
-      section: 'A'
+      objectId: '507f1f77bcf86cd799439011'
     });
 
   expect(response.status).toBe(400);
   expect(response.body.error).toBe('Invalid or missing fields');
 });
 
-test('joinclass with empty classCode returns 400', async () => {
+test('preparebroadcast with empty userId returns 400', async () => {
   const response = await request(app)
-    .post('/api/joinclass')
+    .post('/api/preparebroadcast')
     .send({
-      userId: jestStudent.UserID,
-      classCode: '',
-      section: 'A'
+      userId: '',
+      objectId: '507f1f77bcf86cd799439011'
     });
 
   expect(response.status).toBe(400);
   expect(response.body.error).toBe('Invalid or missing fields');
 });
 
-test('joinclass with null section returns 400', async () => {
+test('preparebroadcast with missing objectId returns 400', async () => {
   const response = await request(app)
-    .post('/api/joinclass')
+    .post('/api/preparebroadcast')
     .send({
-      userId: jestStudent.UserID,
-      classCode: 'JEST201',
-      section: null
+      userId: 12345
     });
 
   expect(response.status).toBe(400);
   expect(response.body.error).toBe('Invalid or missing fields');
 });
 
-test('joinclass with missing section returns 400', async () => {
+test('preparebroadcast with null objectId returns 400', async () => {
   const response = await request(app)
-    .post('/api/joinclass')
+    .post('/api/preparebroadcast')
     .send({
-      userId: jestStudent.UserID,
-      classCode: 'JEST201'
+      userId: 12345,
+      objectId: null
     });
 
   expect(response.status).toBe(400);
   expect(response.body.error).toBe('Invalid or missing fields');
 });
 
-test('joinclass with nonexistent class returns 404', async () => {
+test('preparebroadcast with invalid objectId format returns 400', async () => {
   const response = await request(app)
-    .post('/api/joinclass')
+    .post('/api/preparebroadcast')
     .send({
-      userId: jestStudent.UserID,
-      classCode: 'NONEXISTENT',
-      section: 'A'
+      userId: 12345,
+      objectId: 'invalid-id-format'
+    });
+
+  expect(response.status).toBe(400);
+  expect(response.body.error).toBe('Invalid class ID format');
+});
+
+test('preparebroadcast with nonexistent class returns 404', async () => {
+  const response = await request(app)
+    .post('/api/preparebroadcast')
+    .send({
+      userId: 12345,
+      objectId: '507f1f77bcf86cd799439011'
     });
 
   expect(response.status).toBe(404);
   expect(response.body.error).toBe('Class not found');
 });
 
-test('joinclass with valid data returns 200', async () => {
+test('preparebroadcast with valid data returns 200', async () => {
   const response = await request(app)
-    .post('/api/joinclass')
+    .post('/api/preparebroadcast')
     .send({
-      userId: jestStudent.UserID,
-      classCode: 'JEST201',
-      section: 'A'
+      userId: jestTeacher.UserID,
+      objectId: jestClassId.toString()
     });
 
   expect(response.status).toBe(200);

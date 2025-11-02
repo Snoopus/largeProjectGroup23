@@ -7,39 +7,29 @@ let client;
 let jestClassId;
 
 // Test data
-const jestStudent = {
-  login: 'jeststudent@test.com',
-  password: 'JestStudentPass123',
-  FirstName: 'Jest',
-  LastName: 'Student',
-  UserID: 99993,
-  Role: 'student',
-  classList: []
-};
-
 const jestTeacher = {
-  login: 'jestteacher2@test.com',
+  login: 'jestteacher4@test.com',
   password: 'JestTeacherPass123',
   FirstName: 'Jest',
-  LastName: 'Teacher2',
-  UserID: 99994,
+  LastName: 'Teacher4',
+  UserID: 99996,
   Role: 'teacher',
   classList: []
 };
 
 const jestClass = {
-  name: 'Jest Join Class',
-  classCode: 'JEST201',
+  name: 'Jest Secret Class',
+  classCode: 'JEST401',
   section: 'A',
   daysOffered: ['Monday', 'Wednesday'],
-  startTime: '10:00',
-  endTime: '11:00',
+  startTime: '11:00',
+  endTime: '12:00',
   duration: 60,
-  instructorId: 99994,
-  instructorName: 'Jest Teacher2',
+  instructorId: 99996,
+  instructorName: 'Jest Teacher4',
   studentList: [],
   currentAttendance: null,
-  secret: null
+  secret: 'JEST-SECRET-123'
 };
 
 beforeAll(async () => {
@@ -50,16 +40,17 @@ beforeAll(async () => {
   db = client.db('Project');
 
   // Insert test data
-  await db.collection('Users').insertOne(jestStudent);
-  await db.collection('Users').insertOne(jestTeacher);
   const classResult = await db.collection('Classes').insertOne(jestClass);
   jestClassId = classResult.insertedId;
+  
+  jestTeacher.classList = [jestClassId];
+  await db.collection('Users').insertOne(jestTeacher);
 });
 
 afterAll(async () => {
-  // Clean up test data - only delete specific test users and classes
+  // Clean up test data - only delete specific test user and classes
   await db.collection('Users').deleteMany({ 
-    UserID: { $in: [jestStudent.UserID, jestTeacher.UserID] }
+    UserID: jestTeacher.UserID
   });
   await db.collection('Classes').deleteMany({ 
     instructorId: jestTeacher.UserID
@@ -69,76 +60,82 @@ afterAll(async () => {
   await new Promise(resolve => setTimeout(resolve, 500));
 });
 
-test('joinclass with missing userId returns 400', async () => {
+test('removesecret with missing userId returns 400', async () => {
   const response = await request(app)
-    .post('/api/joinclass')
+    .post('/api/removesecret')
     .send({
-      classCode: 'JEST201',
-      section: 'A'
+      objectId: '507f1f77bcf86cd799439011'
     });
 
   expect(response.status).toBe(400);
   expect(response.body.error).toBe('Invalid or missing fields');
 });
 
-test('joinclass with empty classCode returns 400', async () => {
+test('removesecret with empty userId returns 400', async () => {
   const response = await request(app)
-    .post('/api/joinclass')
+    .post('/api/removesecret')
     .send({
-      userId: jestStudent.UserID,
-      classCode: '',
-      section: 'A'
+      userId: '',
+      objectId: '507f1f77bcf86cd799439011'
     });
 
   expect(response.status).toBe(400);
   expect(response.body.error).toBe('Invalid or missing fields');
 });
 
-test('joinclass with null section returns 400', async () => {
+test('removesecret with missing objectId returns 400', async () => {
   const response = await request(app)
-    .post('/api/joinclass')
+    .post('/api/removesecret')
     .send({
-      userId: jestStudent.UserID,
-      classCode: 'JEST201',
-      section: null
+      userId: 12345
     });
 
   expect(response.status).toBe(400);
   expect(response.body.error).toBe('Invalid or missing fields');
 });
 
-test('joinclass with missing section returns 400', async () => {
+test('removesecret with null objectId returns 400', async () => {
   const response = await request(app)
-    .post('/api/joinclass')
+    .post('/api/removesecret')
     .send({
-      userId: jestStudent.UserID,
-      classCode: 'JEST201'
+      userId: 12345,
+      objectId: null
     });
 
   expect(response.status).toBe(400);
   expect(response.body.error).toBe('Invalid or missing fields');
 });
 
-test('joinclass with nonexistent class returns 404', async () => {
+test('removesecret with invalid objectId format returns 400', async () => {
   const response = await request(app)
-    .post('/api/joinclass')
+    .post('/api/removesecret')
     .send({
-      userId: jestStudent.UserID,
-      classCode: 'NONEXISTENT',
-      section: 'A'
+      userId: 12345,
+      objectId: 'invalid-id-format'
+    });
+
+  expect(response.status).toBe(400);
+  expect(response.body.error).toBe('Invalid class ID format');
+});
+
+test('removesecret with nonexistent class returns 404', async () => {
+  const response = await request(app)
+    .post('/api/removesecret')
+    .send({
+      userId: 12345,
+      objectId: '507f1f77bcf86cd799439011'
     });
 
   expect(response.status).toBe(404);
   expect(response.body.error).toBe('Class not found');
 });
 
-test('joinclass with valid data returns 200', async () => {
+test('removesecret with valid data returns 200', async () => {
   const response = await request(app)
-    .post('/api/joinclass')
+    .post('/api/removesecret')
     .send({
-      userId: jestStudent.UserID,
-      classCode: 'JEST201',
-      section: 'A'
+      userId: jestTeacher.UserID,
+      objectId: jestClassId.toString()
     });
 
   expect(response.status).toBe(200);
