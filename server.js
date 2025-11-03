@@ -7,6 +7,7 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const setupAuthRoutes = require('./authRoutes');
 const setupClassRoutes = require('./classRoutes');
 const setupAttendanceRoutes = require('./attendanceRoutes');
+const setupRecordsRoutes = require('./recordsRoutes');
 
 //const url = '';
 //Go to drivers and get connection string for MongoDB
@@ -62,6 +63,8 @@ setupClassRoutes(app, client);
 
 // Setup attendance routes
 setupAttendanceRoutes(app, client);
+
+setupRecordsRoutes(app, client);
 
 
 //app.listen(5000); // start Node + Express server on port 5000
