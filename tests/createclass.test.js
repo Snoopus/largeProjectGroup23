@@ -148,3 +148,36 @@ test('createclass with valid data returns 200', async () => {
   expect(response.body.error).toBe('');
   expect(response.body.classId).toBeDefined();
 });
+
+test('createclass with duplicate class code and section returns 400', async () => {
+  // First, create a class
+  await request(app)
+    .post('/api/createclass')
+    .send({
+      name: 'Jest Duplicate Test',
+      duration: 60,
+      instructorId: jestTeacher.UserID,
+      section: 'B',
+      daysOffered: ['Tuesday', 'Thursday'],
+      startTime: '10:00',
+      endTime: '11:00',
+      classCode: 'JEST102'
+    });
+
+  // Try to create the same class again
+  const response = await request(app)
+    .post('/api/createclass')
+    .send({
+      name: 'Jest Duplicate Test 2',
+      duration: 60,
+      instructorId: jestTeacher.UserID,
+      section: 'B',
+      daysOffered: ['Monday', 'Wednesday'],
+      startTime: '09:00',
+      endTime: '10:00',
+      classCode: 'JEST102'
+    });
+
+  expect(response.status).toBe(400);
+  expect(response.body.error).toBe('Class with this code and section already exists');
+});

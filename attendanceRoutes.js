@@ -61,8 +61,13 @@ function setupAttendanceRoutes(app, client) {
         return res.status(400).json({ error: ERROR_MESSAGES.ATTENDANCE_ACTIVE });
       }
       
+      const instructor = await db.collection(USERS).findOne({ UserID: userId });
+      if (!instructor) {
+        return res.status(404).json({ error: ERROR_MESSAGES.USER_NOT_FOUND });
+      }
+
       // CREATE NEW RECORD 
-      const attendanceRecord = newRecord(classToBroadcast._id, objectId);
+      const attendanceRecord = newRecord(classToBroadcast._id, instructor._id);
       const result = await db.collection(RECORDS).insertOne(attendanceRecord);
 
       const attendanceId = result.insertedId;
@@ -120,13 +125,13 @@ function setupAttendanceRoutes(app, client) {
         return res.status(500).json({ error: ERROR_MESSAGES.SERVER_ERROR });
       }
 
-      for (const studentId in record.pingsCollected) {
-        const pings = record.pingsCollected[studentId];
-        if (pings / record.totalPings >= ATTENDANCE_THRESHOLD) {
-          // Mark attendance for this student
+      // for (const studentId in record.pingsCollected) {
+      //   const pings = record.pingsCollected[studentId];
+      //   if (pings / record.totalPings >= ATTENDANCE_THRESHOLD) {
+      //     // Mark attendance for this student
 
-        }
-      }
+      //   }
+      // }
 
       await db.collection(CLASSES).updateOne(
         { _id: new ObjectId(objectId) },

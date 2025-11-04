@@ -202,3 +202,45 @@ test('newsecret with valid data returns 200', async () => {
   expect(response.status).toBe(200);
   expect(response.body.error).toBe('');
 });
+
+test('newsecret with non-instructor user returns 403', async () => {
+  // Create a different teacher
+  const otherTeacher = {
+    login: 'otherteacher2@test.com',
+    password: 'OtherTeacherPass123',
+    FirstName: 'Other',
+    LastName: 'Teacher2',
+    UserID: 99985,
+    Role: 'teacher',
+    classList: []
+  };
+  
+  await db.collection('Users').insertOne(otherTeacher);
+
+  const response = await request(app)
+    .post('/api/newsecret')
+    .send({
+      userId: otherTeacher.UserID,
+      objectId: jestClassId.toString(),
+      secret: 'ANOTHER-SECRET'
+    });
+
+  expect(response.status).toBe(403);
+  expect(response.body.error).toBe('Only the instructor can perform this action');
+
+  // Cleanup
+  await db.collection('Users').deleteOne({ UserID: otherTeacher.UserID });
+});
+
+test('newsecret when secret already active returns 400', async () => {
+  const response = await request(app)
+    .post('/api/newsecret')
+    .send({
+      userId: jestTeacher.UserID,
+      objectId: jestClassId.toString(),
+      secret: 'ANOTHER-SECRET'
+    });
+
+  expect(response.status).toBe(400);
+  expect(response.body.error).toBe('A secret session is already active');
+});

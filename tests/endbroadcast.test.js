@@ -170,3 +170,65 @@ test('endbroadcast with valid data returns 200', async () => {
   expect(response.status).toBe(200);
   expect(response.body.error).toBe('');
 });
+
+test('endbroadcast with non-instructor user returns 403', async () => {
+  // First prepare a new broadcast
+  const teacherResult = await db.collection('Users').findOne({ UserID: jestTeacher.UserID });
+  const newAttendanceRecord = {
+    classId: jestClassId,
+    instructorId: teacherResult._id,
+    startTime: new Date(),
+    active: false,
+    totalPings: 0,
+    pingsCollected: {}
+  };
+  const newAttendanceResult = await db.collection('Records').insertOne(newAttendanceRecord);
+  
+  await db.collection('Classes').updateOne(
+    { _id: jestClassId },
+    { $set: { currentAttendance: newAttendanceResult.insertedId } }
+  );
+
+  // Create a different teacher
+  const otherTeacher = {
+    login: 'otherteacher4@test.com',
+    password: 'OtherTeacherPass123',
+    FirstName: 'Other',
+    LastName: 'Teacher4',
+    UserID: 99983,
+    Role: 'teacher',
+    classList: []
+  };
+  
+  await db.collection('Users').insertOne(otherTeacher);
+
+  const response = await request(app)
+    .post('/api/endbroadcast')
+    .send({
+      userId: otherTeacher.UserID,
+      objectId: jestClassId.toString()
+    });
+
+  expect(response.status).toBe(403);
+  expect(response.body.error).toBe('Only the instructor can perform this action');
+
+  // Cleanup
+  await db.collection('Users').deleteOne({ UserID: otherTeacher.UserID });
+  await db.collection('Records').deleteOne({ _id: newAttendanceResult.insertedId });
+  await db.collection('Classes').updateOne(
+    { _id: jestClassId },
+    { $set: { currentAttendance: null } }
+  );
+});
+
+test('endbroadcast when no active attendance returns 400', async () => {
+  const response = await request(app)
+    .post('/api/endbroadcast')
+    .send({
+      userId: jestTeacher.UserID,
+      objectId: jestClassId.toString()
+    });
+
+  expect(response.status).toBe(400);
+  expect(response.body.error).toBe('No active attendance session to end');
+});

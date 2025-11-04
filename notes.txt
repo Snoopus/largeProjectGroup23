@@ -1,2 +1,3 @@
-npm run dev for frontend
-npm start for server
+`npm run dev` for frontend
+`npm start` for server
+`npm test` to run jest tests

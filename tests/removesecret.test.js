@@ -141,3 +141,53 @@ test('removesecret with valid data returns 200', async () => {
   expect(response.status).toBe(200);
   expect(response.body.error).toBe('');
 });
+
+test('removesecret with non-instructor user returns 403', async () => {
+  // First set a secret again
+  await db.collection('Classes').updateOne(
+    { _id: jestClassId },
+    { $set: { secret: 'JEST-SECRET-456' } }
+  );
+
+  // Create a different teacher
+  const otherTeacher = {
+    login: 'otherteacher3@test.com',
+    password: 'OtherTeacherPass123',
+    FirstName: 'Other',
+    LastName: 'Teacher3',
+    UserID: 99984,
+    Role: 'teacher',
+    classList: []
+  };
+  
+  await db.collection('Users').insertOne(otherTeacher);
+
+  const response = await request(app)
+    .post('/api/removesecret')
+    .send({
+      userId: otherTeacher.UserID,
+      objectId: jestClassId.toString()
+    });
+
+  expect(response.status).toBe(403);
+  expect(response.body.error).toBe('Only the instructor can perform this action');
+
+  // Cleanup - remove secret and user
+  await db.collection('Classes').updateOne(
+    { _id: jestClassId },
+    { $set: { secret: null } }
+  );
+  await db.collection('Users').deleteOne({ UserID: otherTeacher.UserID });
+});
+
+test('removesecret when no active secret returns 400', async () => {
+  const response = await request(app)
+    .post('/api/removesecret')
+    .send({
+      userId: jestTeacher.UserID,
+      objectId: jestClassId.toString()
+    });
+
+  expect(response.status).toBe(400);
+  expect(response.body.error).toBe('No active secret session to end');
+});

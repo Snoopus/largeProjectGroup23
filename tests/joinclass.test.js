@@ -144,3 +144,29 @@ test('joinclass with valid data returns 200', async () => {
   expect(response.status).toBe(200);
   expect(response.body.error).toBe('');
 });
+
+test('joinclass with already enrolled student returns 400', async () => {
+  const response = await request(app)
+    .post('/api/joinclass')
+    .send({
+      userId: jestStudent.UserID,
+      classCode: 'JEST201',
+      section: 'A'
+    });
+
+  expect(response.status).toBe(400);
+  expect(response.body.error).toBe('User already enrolled in this class');
+});
+
+test('joinclass with teacher role returns 403', async () => {
+  const response = await request(app)
+    .post('/api/joinclass')
+    .send({
+      userId: jestTeacher.UserID,
+      classCode: 'JEST201',
+      section: 'A'
+    });
+
+  expect(response.status).toBe(403);
+  expect(response.body.error).toBe('Only students can join classes');
+});

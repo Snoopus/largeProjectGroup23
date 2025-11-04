@@ -148,3 +148,35 @@ test('register with valid data returns 200', async () => {
   expect(response.status).toBe(200);
   expect(response.body.error).toBe('');
 });
+
+test('register with duplicate email returns 400', async () => {
+  const response = await request(app)
+    .post('/api/register')
+    .send({
+      email: 'jestregister@test.com',
+      password: 'DifferentPass123',
+      firstName: 'Different',
+      lastName: 'User',
+      id: 99992,
+      role: 'student'
+    });
+
+  expect(response.status).toBe(400);
+  expect(response.body.error).toBe('Email already exists');
+});
+
+test('register with duplicate UserID returns 400', async () => {
+  const response = await request(app)
+    .post('/api/register')
+    .send({
+      email: 'differentemail@test.com',
+      password: 'JestPass123',
+      firstName: 'JestReg',
+      lastName: 'User',
+      id: 99991,
+      role: 'student'
+    });
+
+  expect(response.status).toBe(400);
+  expect(response.body.error).toBe('User ID already exists');
+});

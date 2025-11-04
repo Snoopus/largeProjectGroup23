@@ -223,3 +223,45 @@ test('markmehere with valid data returns 200', async () => {
   expect(response.status).toBe(200);
   expect(response.body.error).toBe('');
 });
+
+test('markmehere with incorrect secret returns 403', async () => {
+  const response = await request(app)
+    .post('/api/markmehere')
+    .send({
+      userId: jestStudent.UserID,
+      objectId: jestClassId.toString(),
+      secret: 'WRONG-SECRET'
+    });
+
+  expect(response.status).toBe(403);
+  expect(response.body.error).toBe('Invalid or expired code');
+});
+
+test('markmehere with student not in class returns 403', async () => {
+  // Create a new student not in the class
+  const outsideStudent = {
+    login: 'outsidestudent@test.com',
+    password: 'OutsidePass123',
+    FirstName: 'Outside',
+    LastName: 'Student',
+    UserID: 99988,
+    Role: 'student',
+    classList: []
+  };
+  
+  await db.collection('Users').insertOne(outsideStudent);
+
+  const response = await request(app)
+    .post('/api/markmehere')
+    .send({
+      userId: outsideStudent.UserID,
+      objectId: jestClassId.toString(),
+      secret: 'JEST-ATTEND-SECRET'
+    });
+
+  expect(response.status).toBe(403);
+  expect(response.body.error).toBe('User not enrolled in this class');
+
+  // Cleanup
+  await db.collection('Users').deleteOne({ UserID: outsideStudent.UserID });
+});

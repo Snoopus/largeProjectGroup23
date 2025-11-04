@@ -41,7 +41,7 @@ function setupRecordsRoutes(app, client) {
 
     app.post('/api/fetchstudentrecords', async (req, res, next) => {
         // incoming: userId (NID), objectId (class ID)
-        // outgoing: error, records (array of { attendancePercentage: float, startTime: Date })
+        // outgoing: error, records (array of { studentPings: int, totalPings: int, startTime: Date })
         try {
             const { userId, objectId } = req.body;
 
@@ -63,11 +63,10 @@ function setupRecordsRoutes(app, client) {
                 record.pingsCollected && record.pingsCollected.hasOwnProperty(userId)
             );
 
-            // Map to array of attendance percentages and start times
+            // Map to array of student pings, total pings, and start times
             const attendanceData = filteredRecords.map(record => ({
-                attendancePercentage: record.totalPings > 0 
-                    ? record.pingsCollected[userId] / record.totalPings 
-                    : 0.0,
+                studentPings: record.pingsCollected[userId] || 0,
+                totalPings: record.totalPings || 0,
                 startTime: record.startTime
             }));
 

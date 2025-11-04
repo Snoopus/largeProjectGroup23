@@ -145,3 +145,43 @@ test('preparebroadcast with valid data returns 200', async () => {
   expect(response.status).toBe(200);
   expect(response.body.error).toBe('');
 });
+
+test('preparebroadcast with non-instructor user returns 403', async () => {
+  // Create a different teacher
+  const otherTeacher = {
+    login: 'otherteacher@test.com',
+    password: 'OtherTeacherPass123',
+    FirstName: 'Other',
+    LastName: 'Teacher',
+    UserID: 99986,
+    Role: 'teacher',
+    classList: []
+  };
+  
+  await db.collection('Users').insertOne(otherTeacher);
+
+  const response = await request(app)
+    .post('/api/preparebroadcast')
+    .send({
+      userId: otherTeacher.UserID,
+      objectId: jestClassId.toString()
+    });
+
+  expect(response.status).toBe(403);
+  expect(response.body.error).toBe('Only the instructor can perform this action');
+
+  // Cleanup
+  await db.collection('Users').deleteOne({ UserID: otherTeacher.UserID });
+});
+
+test('preparebroadcast when attendance already active returns 400', async () => {
+  const response = await request(app)
+    .post('/api/preparebroadcast')
+    .send({
+      userId: jestTeacher.UserID,
+      objectId: jestClassId.toString()
+    });
+
+  expect(response.status).toBe(400);
+  expect(response.body.error).toBe('An attendance session is already active');
+});

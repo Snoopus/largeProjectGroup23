@@ -134,6 +134,37 @@ function setupAuthRoutes(app, client) {
       res.status(500).json({ error: ERROR_MESSAGES.SERVER_ERROR });
     }
   });
+
+
+  app.post('/api/changepassword', async (req, res, next) => {
+    // incoming: userId (NID), newPassword
+    // outgoing: error
+
+    const { userId, newPassword } = req.body;
+
+    // Validate inputs
+    if (!areInputsValid(userId, newPassword)) {
+      return res.status(400).json({ error: ERROR_MESSAGES.INVALID_FIELDS });
+    }
+
+    try {
+      const db = client.db(DB_NAME);
+
+      const user = await db.collection(USERS).findOne({UserID: userId});
+      if (!user) {
+        return res.status(404).json({ error: ERROR_MESSAGES.USER_NOT_FOUND });
+      }
+
+      await db.collection(USERS).updateOne(
+        { UserID: userId },
+        { $set: { password: newPassword } }
+      );
+
+      res.status(200).json({ error: '' });
+    } catch (e) {
+      res.status(500).json({ error: ERROR_MESSAGES.SERVER_ERROR });
+    }
+  });
 }
 
 module.exports = setupAuthRoutes;
