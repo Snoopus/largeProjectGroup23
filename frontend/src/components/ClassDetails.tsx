@@ -2,6 +2,7 @@ import { useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import ClassDetailsStyles from '../css/ClassDetails.module.css';
 import generalStyles from '../css/General.module.css';
+import { buildPath } from '../services/buildPath';
 
 const styles = { ...generalStyles, ...ClassDetailsStyles };
 
@@ -29,6 +30,63 @@ function ClassDetails() {
     const [expandedRecords, setExpandedRecords] = useState<Set<string>>(new Set());
 
     useEffect(() => {
+        async function fetchRecords(userId: string, role: string) {
+            try {
+                let endpoint = '';
+                let requestBody = {};
+
+                if (role === 'teacher') {
+                    endpoint = buildPath('api/fetchteacherrecords');
+                    requestBody = { objectId: classId };
+                } else {
+                    endpoint = buildPath('api/fetchstudentrecords');
+                    requestBody = { userId: userId, objectId: classId };
+                }
+
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestBody)
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    setMessage(data.error);
+                    setRecords([]);
+                } else {
+                    if (role === 'teacher') {
+                        // Teacher gets full records with all student data
+                        setRecords(data.records || []);
+                    } else {
+                        // Student gets filtered records, need to convert to full record format
+                        interface StudentRecord {
+                            studentPings: number;
+                            totalPings: number;
+                            startTime: string;
+                        }
+                        const studentRecords = (data.records || []).map((record: StudentRecord, index: number) => ({
+                            _id: `student-record-${index}`,
+                            classId: classId || '',
+                            instructorId: '',
+                            startTime: record.startTime,
+                            active: false,
+                            totalPings: record.totalPings,
+                            pingsCollected: {
+                                [userId]: record.studentPings
+                            }
+                        }));
+                        setRecords(studentRecords);
+                    }
+                }
+            } catch (error) {
+                setMessage('Failed to load attendance records');
+                console.error('Fetch records error:', error);
+            } finally {
+                setLoading(false);
+            }
+        }
+
         const userData = localStorage.getItem('user_data');
         if (!userData) {
             setMessage('Please log in to view class details');
@@ -40,76 +98,9 @@ function ClassDetails() {
         setUserRole(user.role);
         setUserId(user.id);
 
-        // Static sample data for now
-        const sampleRecords: AttendanceRecord[] = [
-            {
-                _id: "6903def7dfe0107f232a9483",
-                classId: classId || "",
-                instructorId: "68fe8150529fd9e4bb5d9731",
-                startTime: "2025-09-01T16:00:00.000Z",
-                active: false,
-                totalPings: 4,
-                pingsCollected: {
-                    "su000111": 4,
-                    "ar000222": 0,
-                    "ma000333": 3,
-                    "awdddd22": 3,
-                    "gagwag22": 3,
-                    "gawe23ba": 3,
-                    "baw44ada": 3,
-                    "23332bba": 3,
-                    "42abddad": 3,
-                    "23dbawdd": 3,
-                    "244nmmaa": 3,
-                    "123dawdn": 3,
-                    "662awdda": 3,
-                    "no000444": 3
-                }
-            },
-            {
-                _id: "6903def7dfe0107f232a9484",
-                classId: classId || "",
-                instructorId: "68fe8150529fd9e4bb5d9731",
-                startTime: "2025-09-08T17:00:00.000Z",
-                active: false,
-                totalPings: 5,
-                pingsCollected: {
-                    "su000111": 5,
-                    "ar000222": 2,
-                    "ma000333": 4,
-                    "no000444": 5
-                }
-            },
-            {
-                _id: "6903def7dfe0107f232a9485",
-                classId: classId || "",
-                instructorId: "68fe8150529fd9e4bb5d9731",
-                startTime: "2025-09-15T16:00:00.000Z",
-                active: false,
-                totalPings: 3,
-                pingsCollected: {
-                    "su000111": 3,
-                    "ar000222": 1,
-                    "ma000333": 3,
-                    "no000444": 2
-                }
-            }
-        ];
-
-        setRecords(sampleRecords);
-        setLoading(false);
+        // Fetch records from API
+        fetchRecords(user.id, user.role);
     }, [classId]);
-
-    const formatDate = (dateString: string) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    };
 
     const toggleExpanded = (recordId: string) => {
         setExpandedRecords(prev => {
