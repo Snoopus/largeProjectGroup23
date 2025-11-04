@@ -28,3 +28,124 @@
     margin-bottom: clamp(30px, 5vh, 50px);
     color: #ffffff;
 }
+
+.container {
+    padding: 80px 20px 20px 20px;
+    max-width: 2400px;
+    margin: 0 auto;
+    color: #ffffff;
+}
+
+.classId {
+    color: #ffc904;
+    margin-bottom: 30px;
+    font-size: 18px;
+}
+
+.recordsContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.recordCard {
+    width: 100%;
+    background-color: #1a1a1a;
+    border: 2px solid #ffc904;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.recordCard:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(255, 201, 4, 0.3);
+}
+
+.recordTable {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.headerRow {
+    background-color: #ffc904;
+    color: #000000;
+}
+
+.headerRow th {
+    padding: 15px 20px;
+    text-align: left;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 14px;
+}
+
+.dataRow td {
+    padding: 15px 20px;
+    text-align: left;
+    font-size: 16px;
+    color: #ffffff;
+}
+
+.expandButton {
+    background-color: #000000;
+    color: #ffc904;
+    border: 2px solid #ffc904;
+    padding: 8px 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    font-size: 14px;
+}
+
+.expandButton:hover {
+    background-color: #ffc904;
+    color: #000000;
+}
+
+.studentList {
+    width: 100%;
+    background-color: #0a0a0a;
+    border-top: 2px solid #ffc904;
+    padding: 0;
+}
+
+.studentTable {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.studentTable thead {
+    background-color: #2a2a2a;
+    color: #ffc904;
+}
+
+.studentTable th {
+    padding: 12px 20px;
+    text-align: left;
+    font-weight: bold;
+    font-size: 13px;
+    text-transform: uppercase;
+}
+
+.studentTable td {
+    padding: 12px 20px;
+    text-align: left;
+    border-bottom: 1px solid #333;
+    color: #ffffff;
+}
+
+.studentTable tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+.studentTable tbody tr:hover {
+    background-color: #1a1a1a;
+}
+
+.studentTable tbody tr:last-child td {
+    border-bottom: none;
+}
+
