@@ -14,14 +14,21 @@ const {
 } = require('./utils');
 
 // Helper function to create a new attendance record
-function newRecord(classId, instructorId) {
+function newRecord(classId, instructorId, studentList = []) {
+  // Prefill pingsCollected with each student's NID set to 0
+  const pingsCollected = {};
+  (studentList || []).forEach(nid => {
+    if (nid !== null && nid !== undefined && String(nid).trim() !== '') {
+      pingsCollected[String(nid)] = 0;
+    }
+  });
   return {
-    classId: new ObjectId(classId),
-    instructorId: new ObjectId(instructorId),
+    classId: classId,
+    instructorId: instructorId,
     startTime: new Date(),
     active: false,
     totalPings: 0,
-    pingsCollected: {}
+    pingsCollected: pingsCollected
   };
 }
 
@@ -66,8 +73,10 @@ function setupAttendanceRoutes(app, client) {
         return res.status(404).json({ error: ERROR_MESSAGES.USER_NOT_FOUND });
       }
 
-      // CREATE NEW RECORD 
-      const attendanceRecord = newRecord(classToBroadcast._id, instructor._id);
+      const studentList = classToBroadcast.studentList;
+
+      // CREATE NEW RECORD
+      const attendanceRecord = newRecord(classToBroadcast._id, userId, studentList);
       const result = await db.collection(RECORDS).insertOne(attendanceRecord);
 
       const attendanceId = result.insertedId;
