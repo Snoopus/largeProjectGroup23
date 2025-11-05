@@ -14,7 +14,8 @@
         "dotenv": "^17.2.3",
         "express": "^4.21.2",
         "mongodb": "^5.9.2",
-        "nodemon": "^3.1.10"
+        "nodemon": "^3.1.10",
+        "jsonwebtoken": "^9.0.2"
     },
     "devDependencies": {
         "jest": "^30.2.0",

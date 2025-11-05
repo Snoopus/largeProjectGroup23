@@ -56,7 +56,9 @@ const ERROR_MESSAGES = {
   SECRET_INACTIVE: 'No active secret session to end',
   INVALID_ROLE: 'Invalid role. Must be student or teacher',
   INVALID_EMAIL: 'Invalid email format',
-  INVALID_OBJECT_ID: 'Invalid class ID format'
+  INVALID_OBJECT_ID: 'Invalid class ID format',
+  JWT_EXPIRED: 'JSON Web Token has expired',
+  JWT_INVALID: 'JSON Web Token is invalid'
 };
 
 module.exports = {
