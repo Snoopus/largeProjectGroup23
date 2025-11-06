@@ -1,7 +1,9 @@
 import registerStyles from '../css/Register.module.css';
 import generalStyles from '../css/General.module.css';
 import { useState } from 'react';
-import { registerUser, loginUser } from '../services/authService';
+import { useNavigate } from 'react-router-dom';
+import { registerUser } from '../services/authService';
+import { buildPath } from '../services/buildPath';
 
 // Merge both style objects - registerStyles will override generalStyles if there are conflicts
 const styles = { ...generalStyles, ...registerStyles };
@@ -18,8 +20,10 @@ function Register() {
     const [lastName, setLastName] = useState('');
     const [id,setId] = useState('');
     const [role, setRole] = useState(STUDENT);
+    const [isLoading, setIsLoading] = useState(false);
+    const navigate = useNavigate();
 
-    async function doRegister(event:any) : Promise<void>
+    async function doRegister(event: React.FormEvent) : Promise<void>
     {
         event.preventDefault();
 
@@ -29,26 +33,32 @@ function Register() {
             return;
         }
 
+        setIsLoading(true);
+
         try {
-            // Register the user
-            await registerUser(email, password, firstName, lastName, id, role);
+            // Register the user (creates unverified account)
+            //await registerUser(email, password, firstName, lastName, id, role);
             
-            // Automatically log them in after successful registration
-            await loginUser(email, password);
-            
-            setMessage('Registration successful!');
-            // if(role === TEACHER) {
-            //     window.location.href = '/classes';
-            //     return;
-            // }
-            // else {
-            //     window.location.href = '/download';
-            //     return;
-            // }
-            window.location.href = '/classes';
+            const registrationInfo = { 
+                email: email,
+                password: password,
+                firstName: firstName, 
+                lastName: lastName, 
+                id: id,
+                role: role || "student"
+            };
+            localStorage.setItem('registration_data', JSON.stringify(registrationInfo));
+
+            // Navigate to verification page with email
+            navigate('/verification?type=registration', { 
+                state: { email: email } 
+            });
         }
-        catch (error: any) {
-            setMessage(error.message || 'Registration failed');
+        catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Registration failed';
+            setMessage(errorMessage);
+        } finally {
+            setIsLoading(false);
         }
     }
 
@@ -91,8 +101,14 @@ function Register() {
                     </button>
                 </div>
                 
-                <input type="submit" id="registerButton" className={styles.buttons} value = "Register"
-                onClick={doRegister} />
+                <input 
+                    type="submit" 
+                    id="registerButton" 
+                    className={styles.buttons} 
+                    value={isLoading ? "Registering..." : "Register"}
+                    onClick={doRegister}
+                    disabled={isLoading}
+                />
                 <div id="registerResult">{message}</div>
                 <br />
                 <br />
