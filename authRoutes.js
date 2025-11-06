@@ -163,23 +163,18 @@ function setupAuthRoutes(app, client) {
     }
 
     try {
-      var postmarkClient = new postmark.ServerClient(process.env.POSTMARK_SERVER_TOKEN);
-      var model = {
-        product_name: "bHere@UCF",
-        code: newCode,
-        company_name: "bHere@UCF",
-        company_address: "UCF, Orlando, FL",
-        operating_system: "Window"
-      }
+      // var postmarkClient = new postmark.ServerClient(process.env.POSTMARK_SERVER_TOKEN);
+      // var model = {
+      //   product_name: "bHere@UCF",
+      //   code: newCode,
+      //   company_name: "bHere@UCF",
+      //   company_address: "UCF, Orlando, FL",
+      //   operating_system: "Window"
+      // }
 
-      var message = new postmark.TemplatedMessage("notifications@email.ilovenarwhals.xyz", TemplateID , model, email);
-      // postmarkClient.sendEmail({
-      //   "From": "sender@example.com",
-      //   "To": "receiver@example.com",
-      //   "Subject": "Test",
-      //   "TextBody": "Hello from Postmark!"
-      // });
-      postmarkClient.sendEmailWithTemplate(message);
+      // var message = new postmark.TemplatedMessage("notifications@email.ilovenarwhals.xyz", TemplateID , model, email);
+    
+      // postmarkClient.sendEmailWithTemplate(message); //do not await
 
       const db = client.db(DB_NAME);
 
@@ -188,6 +183,37 @@ function setupAuthRoutes(app, client) {
       res.status(200).json({ error: '' });
     } catch (e) {
       console.error('Error sending email code:', e);
+      res.status(500).json({ error: ERROR_MESSAGES.SERVER_ERROR });
+    }
+  });
+
+  app.post('/api/verifyEmailCode', async (req, res, next) => {
+    // incoming: email, verificationCode
+    // outgoing: error
+
+    const { email, verificationCode } = req.body;
+
+    if (!areInputsValid(email, verificationCode)) {
+      return res.status(400).json({ error: ERROR_MESSAGES.INVALID_FIELDS });
+    }
+
+    try {
+      const db = client.db(DB_NAME);
+      const record = await db.collection('emailCodes').findOne({ email, code: verificationCode } );
+
+      if (!record) {
+        return res.status(400).json({ error: ERROR_MESSAGES.INVALID_SECRET });
+      }
+      
+      if(record.code === verificationCode) {
+        // Code matches, verification successful
+        
+        //Delete the used code
+        await db.collection('emailCodes').deleteOne({ email, code: verificationCode });
+        return res.status(200).json({ error: '' });
+      }
+    } catch (e) {
+      console.error('Error verifying email code:', e);
       res.status(500).json({ error: ERROR_MESSAGES.SERVER_ERROR });
     }
   });
