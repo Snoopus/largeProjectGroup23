@@ -42,12 +42,22 @@ function setupAuthRoutes(app, client) {
 
       if (results.length > 0) {
         const user = results[0];
+        const token = jwt.sign(
+          {
+            id: user.UserID,
+            firstName: user.FirstName,
+            lastName: user.LastName,
+            role: user.Role
+          }, 'superSecret', { expiresIn: '1h' }
+        );
+
         return res.status(200).json({ 
           id: user.UserID, 
           firstName: user.FirstName, 
           lastName: user.LastName, 
           error: '', 
-          role: user.Role
+          role: user.Role,
+          token: token
         });
       }
 
@@ -126,13 +136,23 @@ function setupAuthRoutes(app, client) {
       // If no existing users found, proceed with registration
       await db.collection(USERS).insertOne(newUser);
       
-      // Successful registration
-      res.status(200).json({ error: '' });
-
     } catch (e) {
       console.error('Registration error:', e);
-      res.status(500).json({ error: ERROR_MESSAGES.SERVER_ERROR });
+      return res.status(500).json({ error: ERROR_MESSAGES.SERVER_ERROR });
     }
+
+    const token = jwt.sign(
+      {
+        id: id,
+        firstName: firstName,
+        lastName: lastName,
+        role: roleLower
+      }, 'superSecret', { expiresIn: '1h' }
+    );
+
+    // Successful registration
+    res.status(200).json({ token: token, error: '' });
+
   });
 
 
