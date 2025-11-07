@@ -23,9 +23,21 @@ function Register() {
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
 
+    function isValidEmail(email: string): boolean {
+        // RFC 5322 compliant email regex (simplified version)
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
+
     async function doRegister(event: React.FormEvent) : Promise<void>
     {
         event.preventDefault();
+
+        // Validate email format
+        if (!email || !isValidEmail(email)) {
+            setMessage('Please enter a valid email address');
+            return;
+        }
 
         // Validate passwords match
         if (password !== confirmPassword) {
@@ -66,7 +78,7 @@ function Register() {
                 <span id="inner-title" className={styles.cardTitle}>PLEASE REGISTER</span><br />
                 <div id="emailInput" className={styles.inputRow}>
                     <label className={styles.inputLabel} htmlFor="registerName">Email:</label>
-                    <input type="text" id="registerName" placeholder="johnDoe@example.com" className={styles.textInput} onChange={handleSetEmail} />
+                    <input type="email" id="registerName" placeholder="johnDoe@example.com" className={styles.textInput} onChange={handleSetEmail} required />
                 </div>
                 <div id="idInput" className={styles.inputRow}>
                     <label className={styles.inputLabel} htmlFor="registerId">ID:</label>

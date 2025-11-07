@@ -220,28 +220,62 @@ function setupAuthRoutes(app, client) {
 
 
   app.post('/api/changepassword', async (req, res, next) => {
-    // incoming: userId (NID), newPassword
+    // incoming: email, newPassword
     // outgoing: error
 
-    const { userId, newPassword } = req.body;
+    const { email, newPassword } = req.body;
 
     // Validate inputs
-    if (!areInputsValid(userId, newPassword)) {
+    if (!areInputsValid(email, newPassword)) {
       return res.status(400).json({ error: ERROR_MESSAGES.INVALID_FIELDS });
+    }
+
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ error: ERROR_MESSAGES.INVALID_EMAIL });
     }
 
     try {
       const db = client.db(DB_NAME);
 
-      const user = await db.collection(USERS).findOne({UserID: userId});
+      const user = await db.collection(USERS).findOne({ login: email });
       if (!user) {
         return res.status(404).json({ error: ERROR_MESSAGES.USER_NOT_FOUND });
       }
 
       await db.collection(USERS).updateOne(
-        { UserID: userId },
+        { login: email },
         { $set: { password: newPassword } }
       );
+
+      res.status(200).json({ error: '' });
+    } catch (e) {
+      res.status(500).json({ error: ERROR_MESSAGES.SERVER_ERROR });
+    }
+  });
+
+
+  app.post('/api/findExistingUser', async (req, res, next) => {
+    // incoming: email
+    // outgoing: error
+
+    const { email } = req.body;
+
+    // Validate inputs
+    if (!areInputsValid(email)) {
+      return res.status(400).json({ error: ERROR_MESSAGES.INVALID_FIELDS });
+    }
+
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ error: ERROR_MESSAGES.INVALID_EMAIL });
+    }
+
+    try {
+      const db = client.db(DB_NAME);
+
+      const user = await db.collection(USERS).findOne({ login: email });
+      if (!user) {
+        return res.status(404).json({ error: ERROR_MESSAGES.USER_NOT_FOUND });
+      }
 
       res.status(200).json({ error: '' });
     } catch (e) {

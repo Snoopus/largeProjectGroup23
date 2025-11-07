@@ -19,6 +19,12 @@ function EnterCode({ mode }: EnterCodeProps) {
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
 
+    function isValidEmail(email: string): boolean {
+        // RFC 5322 compliant email regex (simplified version)
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
+
     // Get email from navigation state (passed from Register or ForgotPassword page)
     useEffect(() => {
         const userData = localStorage.getItem('registration_data');
@@ -32,7 +38,7 @@ function EnterCode({ mode }: EnterCodeProps) {
         }
     }, []);
 
-    async function sendEmailCode(event: any): Promise<void> {
+    async function sendEmailCode(event: React.FormEvent): Promise<void> {
         event.preventDefault();
         const emailAddress = email;
         
@@ -40,8 +46,14 @@ function EnterCode({ mode }: EnterCodeProps) {
             setMessage('Email not found. Please restart the process.');
             return;
         }
-        else{
-            try {
+
+        // Validate email format
+        if (!isValidEmail(emailAddress)) {
+            setMessage('Invalid email format. Please restart the process with a valid email.');
+            return;
+        }
+        
+        try {
                 const obj = { 
                     email: emailAddress,
                     templateChoice: mode === 'registration' ? 'registration' : 'passwordReset'
@@ -68,8 +80,8 @@ function EnterCode({ mode }: EnterCodeProps) {
             } finally {
                 setIsLoading(false);
             }  
-        }
     }
+    
     // Text content based on mode
     const title = mode === 'registration' 
         ? 'Verify Your Email' 
@@ -137,7 +149,7 @@ function EnterCode({ mode }: EnterCodeProps) {
             } else {
                 setMessage('Code verified! Redirecting to password reset...');
                 setTimeout(() => {
-                    navigate('/reset-password');
+                    navigate('/changepassword');
                 }, 2000);
             }
         } catch (error: unknown) {
@@ -164,6 +176,16 @@ function EnterCode({ mode }: EnterCodeProps) {
                 {email && (
                     <p className={styles.inputLabel}>Sending code to: {email}</p>
                 )}
+
+                <button
+                    type="button"
+                    className={styles.buttons}
+                    onClick={sendEmailCode}
+                    disabled={isLoading || !email}
+                >
+                    Send Code
+                </button>
+
                 <div id="classCodeInput" className={styles.inputRow}>
                     <label className={styles.inputLabel} htmlFor="classCode">Verification code:</label>
                     <input 
@@ -178,14 +200,6 @@ function EnterCode({ mode }: EnterCodeProps) {
                         autoComplete="off"
                     />
                 </div>
-                <button
-                    type="button"
-                    className={styles.buttons}
-                    onClick={sendEmailCode}
-                    disabled={isLoading || !email}
-                >
-                    Send Code
-                </button>
 
                 <button
                     type="submit"

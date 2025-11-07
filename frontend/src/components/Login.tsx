@@ -53,7 +53,11 @@ function Login()
                 <br />
                 <br />
                 <div id="registerText" className={styles.registerText}>
-                    Not registered? <a className={styles.buttons} href="/register">Register</a>
+                    Not registered? <a  href="/register">Register</a>
+                </div>
+                <br />
+                <div id="forgotPassword" className={styles.registerText}>
+                    Forgot your password? <a  href="/forgotpassword">Reset Password</a>
                 </div>
             </div>
         </div>
