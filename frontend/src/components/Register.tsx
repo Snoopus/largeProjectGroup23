@@ -36,8 +36,6 @@ function Register() {
         setIsLoading(true);
 
         try {
-            // Register the user (creates unverified account)
-            //await registerUser(email, password, firstName, lastName, id, role);
             
             const registrationInfo = { 
                 email: email,

@@ -1,7 +1,7 @@
 import LoginStyles from '../css/Login.module.css';
 import generalStyles from '../css/General.module.css';
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { buildPath } from '../services/buildPath';
 import { registerUser } from '../services/authService';
 
@@ -23,17 +23,18 @@ function EnterCode({ mode }: EnterCodeProps) {
     useEffect(() => {
         const userData = localStorage.getItem('registration_data');
     
-    if (userData) {
-      const user = JSON.parse(userData);
-      setEmail(user.email);
-    }
-    else{
-        setMessage('Error: No email provided. Please try again.');
-    }
+        if (userData) {
+        const user = JSON.parse(userData);
+        setEmail(user.email);
+        }
+        else{
+            setMessage('Error: No email provided. Please try again.');
+        }
     }, []);
 
-    async function sendEmailCode(emailToSend?: string): Promise<void> {
-        const emailAddress = emailToSend || email;
+    async function sendEmailCode(event: any): Promise<void> {
+        event.preventDefault();
+        const emailAddress = email;
         
         if (!emailAddress) {
             setMessage('Email not found. Please restart the process.');
@@ -116,14 +117,27 @@ function EnterCode({ mode }: EnterCodeProps) {
 
             // Success - navigate based on mode
             if (mode === 'registration') {
-                setMessage('Email verified successfully! Redirecting to login...');
-                setTimeout(() => {
-                    navigate('/');
-                }, 2000);
+                const userData = localStorage.getItem('registration_data');
+                if (userData) {
+                    const user = JSON.parse(userData);
+                    registerUser(user.email, user.password, user.firstName, user.lastName, user.id, user.role);
+                    setMessage('Email verified successfully! Redirecting to login...');
+                    localStorage.removeItem('registration_data');
+                    setTimeout(() => {
+                        navigate('/');
+                    }, 2000);
+                }
+                else{
+                    setMessage('Error: Registration data not found. Please try again.');
+                    localStorage.removeItem('registration_data');
+                    setTimeout(() => {
+                        navigate('/register');
+                    }, 2000);
+                }
             } else {
                 setMessage('Code verified! Redirecting to password reset...');
                 setTimeout(() => {
-                    navigate('/reset-password', { state: { email: email } });
+                    navigate('/reset-password');
                 }, 2000);
             }
         } catch (error: unknown) {
@@ -148,7 +162,7 @@ function EnterCode({ mode }: EnterCodeProps) {
                 <span id="inner-title" className={styles.cardTitle}>{title}</span><br />
                 <p className={styles.inputLabel}>{description}</p>
                 {email && (
-                    <p className={styles.inputLabel}>Code sent to: {email}</p>
+                    <p className={styles.inputLabel}>Sending code to: {email}</p>
                 )}
                 <div id="classCodeInput" className={styles.inputRow}>
                     <label className={styles.inputLabel} htmlFor="classCode">Verification code:</label>
@@ -164,16 +178,6 @@ function EnterCode({ mode }: EnterCodeProps) {
                         autoComplete="off"
                     />
                 </div>
-                
-                <input 
-                    type="submit" 
-                    id="submitButton" 
-                    className={styles.buttons} 
-                    value={isLoading ? "Verifying..." : "Verify Code"}
-                    onClick={verifyCode}
-                    disabled={isLoading || !email}
-                />
-                
                 <button
                     type="button"
                     className={styles.buttons}
@@ -182,6 +186,17 @@ function EnterCode({ mode }: EnterCodeProps) {
                 >
                     Send Code
                 </button>
+
+                <button
+                    type="submit"
+                    className={styles.buttons}
+                    onClick={verifyCode}
+                    disabled={isLoading || !email}
+                >
+                    {isLoading ? "Verifying..." : "Verify Code"}
+                </button>
+                
+                
 
                 <div id="registerResult">{message}</div>
                 <br />
