@@ -9,6 +9,7 @@ const {
   DB_NAME,
   USERS,
   CLASSES,
+  RECORDS,
   ERROR_MESSAGES
 } = require('./utils');
 
@@ -208,18 +209,17 @@ function setupClassRoutes(app, client) {
       return res.status(400).json({ error: ERROR_MESSAGES.INVALID_FIELDS });
     }
 
-    // Validate and convert classId to ObjectId
-    // if (!isValidObjectId(classId)) {
-    //   return res.status(400).json({ error: 'Invalid class ID format' });
-    // }
+    // Validate classId format
+    if (!isValidObjectId(classId, ObjectId)) {
+      return res.status(400).json({ error: ERROR_MESSAGES.INVALID_OBJECT_ID });
+    }
 
     try {
       const db = client.db(DB_NAME);
 
       // Find the class by classId (convert string to ObjectId)
-      const classToLeave = await db.collection(CLASSES).findOne({ 
-        _id: new ObjectId(classId)
-      });
+      const classObjectId = new ObjectId(classId);
+      const classToLeave = await db.collection(CLASSES).findOne({ _id: classObjectId });
       if (!classToLeave) {
         return res.status(404).json({ error: ERROR_MESSAGES.CLASS_NOT_FOUND });
       }
@@ -242,7 +242,7 @@ function setupClassRoutes(app, client) {
       // Remove class from user's classList
       await db.collection(USERS).updateOne(
         { UserID: userId },
-        { $pull: { classList: classToLeave._id } }
+        { $pull: { classList: classObjectId } }
       );
 
       res.status(200).json({ error: '' });
@@ -265,8 +265,8 @@ function setupClassRoutes(app, client) {
     }
 
     // Validate and convert classId to ObjectId
-    if (!isValidObjectId(classId)) {
-      return res.status(400).json({ error: 'Invalid class ID format' });
+    if (!isValidObjectId(classId, ObjectId)) {
+      return res.status(400).json({ error: ERROR_MESSAGES.INVALID_OBJECT_ID });
     }
 
     try {
@@ -283,9 +283,8 @@ function setupClassRoutes(app, client) {
       }
 
       // Find the class by classId
-      const classToDelete = await db.collection(CLASSES).findOne({ 
-        _id: new ObjectId(classId)
-      });
+      const classObjectId = new ObjectId(classId);
+      const classToDelete = await db.collection(CLASSES).findOne({ _id: classObjectId });
       if (!classToDelete) {
         return res.status(404).json({ error: ERROR_MESSAGES.CLASS_NOT_FOUND });
       }
@@ -297,18 +296,21 @@ function setupClassRoutes(app, client) {
       if (studentList.length > 0) {
         await db.collection(USERS).updateMany(
           { UserID: { $in: studentList } },
-          { $pull: { classList: classToDelete._id } }
+          { $pull: { classList: classObjectId } }
         );
       }
 
       // Remove the class from the teacher's classList
       await db.collection(USERS).updateOne(
         { UserID: userId },
-        { $pull: { classList: classToDelete._id } }
+        { $pull: { classList: classObjectId } }
       );
 
       // Finally, delete the class document itself
-      await db.collection(CLASSES).deleteOne({ _id: classToDelete._id });
+      await db.collection(CLASSES).deleteOne({ _id: classObjectId });
+
+      // Delete all records associated with this class
+      await db.collection(RECORDS).deleteMany({ classId: classObjectId });
 
       res.status(200).json({ error: '' });
 
