@@ -1,8 +1,9 @@
 // Authentication routes for login and register
-
+const jwt = require('jsonwebtoken');
 const {
   areInputsValid,
   isValidEmail,
+  validateJWT,
   STUDENT,
   TEACHER,
   DB_NAME,
@@ -48,7 +49,7 @@ function setupAuthRoutes(app, client) {
             firstName: user.FirstName,
             lastName: user.LastName,
             role: user.Role
-          }, 'superSecret', { expiresIn: '1h' }
+          }, 'superSecret', { expiresIn: '3h' }
         );
 
         return res.status(200).json({ 
@@ -147,7 +148,7 @@ function setupAuthRoutes(app, client) {
         firstName: firstName,
         lastName: lastName,
         role: roleLower
-      }, 'superSecret', { expiresIn: '1h' }
+      }, 'superSecret', { expiresIn: '3h' }
     );
 
     // Successful registration
@@ -184,6 +185,32 @@ function setupAuthRoutes(app, client) {
     } catch (e) {
       res.status(500).json({ error: ERROR_MESSAGES.SERVER_ERROR });
     }
+  });
+
+
+  app.post('/api/checkjwt', async (req, res, next) => {
+    //incoming: possibleJWT
+    //outgoing: contents, error
+
+    const { possibleJWT } = req.body;
+
+    try {
+      
+      token = validateJWT(possibleJWT);
+      if ([
+        ERROR_MESSAGES.JWT_MISSING,
+        ERROR_MESSAGES.JWT_INVALID,
+        ERROR_MESSAGES.JWT_EXPIRED
+      ].includes(token)) {
+        return res.status(400).json({ contents: '', error: token });
+      } else { // Token is valid, so we know the contents.
+        return res.status(200).json({ contents: token, error: '' });
+      }
+      
+    } catch (e) {
+      res.status(500).json({ contents: '', error: ERROR_MESSAGES.SERVER_ERROR });
+    } 
+
   });
 }
 
