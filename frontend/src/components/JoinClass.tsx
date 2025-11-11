@@ -120,7 +120,7 @@ function JoinClass()
     return (
         <div id="AddclassWrapper" className={styles.cardWrapper}>
             <div id="loginDiv">
-                <span id="inner-title" className={styles.cardTitle}>Add a Class</span><br />
+                <span id="inner-title" className={styles.cardTitle}>Join a Class</span><br />
                 <div id="classCodeInput" className={styles.inputRow}>
                     <label className={styles.inputLabel} htmlFor="classCode">Class Code:</label>
                     <input 

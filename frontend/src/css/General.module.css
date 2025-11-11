@@ -10,16 +10,18 @@
 
 .buttons {
     background-color: #ffc904;
-    color: white;
+    color: #000000;
     padding: clamp(8px, 1.5vh, 10px) clamp(15px, 3vw, 20px);
+    font-weight: 500;
     border: none;
     border-radius: 5px;
     cursor: pointer;
-    font-size: clamp(14px, 2vw, 16px);
+    font-size: clamp(12px, 1.5vw, 14px);
     transition: background-color 0.3s ease;
 }
 .buttons:hover {
     background-color: #ab8900;
+    color: #ffffff;
     
 }
 
