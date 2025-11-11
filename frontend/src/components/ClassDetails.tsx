@@ -28,6 +28,9 @@ function ClassDetails() {
     const [userRole, setUserRole] = useState<string>('');
     const [userId, setUserId] = useState<string>('');
     const [expandedRecords, setExpandedRecords] = useState<Set<string>>(new Set());
+    const [showModal, setShowModal] = useState(false);
+    const [actionLoading, setActionLoading] = useState(false);
+    const [showManageBox, setShowManageBox] = useState(false);
 
     useEffect(() => {
         async function fetchRecords(userId: string, role: string) {
@@ -114,6 +117,44 @@ function ClassDetails() {
         });
     };
 
+    const handleLeaveOrDeleteClass = async () => {
+        setActionLoading(true);
+        try {
+            let endpoint = '';
+            let requestBody = {};
+
+            if (userRole === 'teacher') {
+                endpoint = buildPath('api/deleteClass');
+                requestBody = { userId: userId, classId: classId };
+            } else {
+                endpoint = buildPath('api/leaveClass');
+                requestBody = { userId: userId, classId: classId };
+            }
+
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody)
+            });
+
+            const data = await response.json();
+
+            if (data.error) {
+                setMessage(data.error);
+                setShowModal(false);
+            } else {
+                // Success - redirect to classes page
+                window.location.href = '/classes';
+            }
+        } catch (error) {
+            setMessage('Failed to perform action');
+            console.error('Leave/Delete class error:', error);
+            setShowModal(false);
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
     const renderTeacherView = (record: AttendanceRecord) => {
         const isExpanded = expandedRecords.has(record._id);
         const date = new Date(record.startTime);
@@ -161,15 +202,22 @@ function ClassDetails() {
                                 <tr>
                                     <th>Student ID</th>
                                     <th>Pings</th>
+                                    <th>Percentage</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {Object.entries(record.pingsCollected).map(([studentId, pings]) => (
-                                    <tr key={studentId}>
-                                        <td>{studentId}</td>
-                                        <td>{pings}</td>
-                                    </tr>
-                                ))}
+                                {Object.entries(record.pingsCollected).map(([studentId, pings]) => {
+                                    const percentage = record.totalPings > 0 
+                                        ? Math.round((pings / record.totalPings) * 100)
+                                        : 0;
+                                    return (
+                                        <tr key={studentId}>
+                                            <td>{studentId}</td>
+                                            <td>{pings}</td>
+                                            <td>{percentage}%</td>
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>
@@ -180,6 +228,9 @@ function ClassDetails() {
 
     const renderStudentView = (record: AttendanceRecord) => {
         const studentPings = record.pingsCollected[userId] ?? 0;
+        const percentage = record.totalPings > 0 
+            ? Math.round((studentPings / record.totalPings) * 100)
+            : 0;
         const date = new Date(record.startTime);
         const dateStr = date.toLocaleDateString('en-US', {
             year: 'numeric',
@@ -200,6 +251,7 @@ function ClassDetails() {
                             <th>Time</th>
                             <th>Your Student ID</th>
                             <th>Your Pings</th>
+                            <th>Percentage</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -208,6 +260,7 @@ function ClassDetails() {
                             <td>{timeStr}</td>
                             <td>{userId}</td>
                             <td>{studentPings}</td>
+                            <td>{percentage}%</td>
                         </tr>
                     </tbody>
                 </table>
@@ -227,6 +280,28 @@ function ClassDetails() {
         <div className={styles.container}>
             <h1>Class Attendance Records</h1>
 
+            <div className={styles.manageClassBox}>
+                <div className={styles.manageClassHeader}>
+                    <h3>Manage Class</h3>
+                    <button 
+                        className={styles.toggleManageButton}
+                        onClick={() => setShowManageBox(!showManageBox)}
+                    >
+                        {showManageBox ? '▼' : '▶'}
+                    </button>
+                </div>
+                {showManageBox && (
+                    <div className={styles.manageClassContent}>
+                        <button 
+                            className={userRole === 'teacher' ? styles.deleteButton : styles.leaveButton}
+                            onClick={() => setShowModal(true)}
+                        >
+                            {userRole === 'teacher' ? 'Delete Class' : 'Leave Class'}
+                        </button>
+                    </div>
+                )}
+            </div>
+
             {records.length === 0 ? (
                 <p>No attendance records found.</p>
             ) : (
@@ -236,6 +311,36 @@ function ClassDetails() {
                             ? renderTeacherView(record)
                             : renderStudentView(record)
                     )}
+                </div>
+            )}
+
+            {showModal && (
+                <div className={styles.modalOverlay}>
+                    <div className={styles.modal}>
+                        <h2>Confirm {userRole === 'teacher' ? 'Delete' : 'Leave'}</h2>
+                        <p>
+                            {userRole === 'teacher' 
+                                ? 'Are you sure you want to delete this class? This action cannot be undone and will remove all attendance records.'
+                                : 'Are you sure you want to leave this class? You will need to rejoin with a class code to access it again.'
+                            }
+                        </p>
+                        <div className={styles.modalButtons}>
+                            <button 
+                                className={styles.cancelButton}
+                                onClick={() => setShowModal(false)}
+                                disabled={actionLoading}
+                            >
+                                Cancel
+                            </button>
+                            <button 
+                                className={userRole === 'teacher' ? styles.confirmDeleteButton : styles.confirmLeaveButton}
+                                onClick={handleLeaveOrDeleteClass}
+                                disabled={actionLoading}
+                            >
+                                {actionLoading ? 'Processing...' : (userRole === 'teacher' ? 'Delete Class' : 'Leave Class')}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
