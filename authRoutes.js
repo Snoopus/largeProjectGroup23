@@ -163,18 +163,18 @@ function setupAuthRoutes(app, client) {
     }
 
     try {
-      // var postmarkClient = new postmark.ServerClient(process.env.POSTMARK_SERVER_TOKEN);
-      // var model = {
-      //   product_name: "bHere@UCF",
-      //   code: newCode,
-      //   company_name: "bHere@UCF",
-      //   company_address: "UCF, Orlando, FL",
-      //   operating_system: "Window"
-      // }
+      var postmarkClient = new postmark.ServerClient(process.env.POSTMARK_SERVER_TOKEN);
+      var model = {
+        product_name: "bHere@UCF",
+        code: newCode,
+        company_name: "bHere@UCF",
+        company_address: "UCF, Orlando, FL",
+        operating_system: "Window"
+      }
 
-      // var message = new postmark.TemplatedMessage("notifications@email.ilovenarwhals.xyz", TemplateID , model, email);
+      var message = new postmark.TemplatedMessage("notifications@email.ilovenarwhals.xyz", TemplateID , model, email);
     
-      // postmarkClient.sendEmailWithTemplate(message); //do not await
+      postmarkClient.sendEmailWithTemplate(message); //do not await
 
       const db = client.db(DB_NAME);
 
