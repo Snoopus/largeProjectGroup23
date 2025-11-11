@@ -3,6 +3,7 @@ import generalStyles from '../css/General.module.css';
 import { useState, useEffect } from 'react';
 import { buildPath } from '../services/buildPath';
 import { useNavigate } from 'react-router-dom';
+import { validateEmail } from '../utils/validation';
 
 // Merge both style objects - loginStyles will override generalStyles if there are conflicts
 const styles = { ...generalStyles, ...LoginStyles };
@@ -13,18 +14,38 @@ function ForgotPassword()
     const [message,setMessage] = useState('');
     const navigate = useNavigate();
 
-    function isValidEmail(email: string): boolean {
-        // RFC 5322 compliant email regex (simplified version)
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return emailRegex.test(email);
-    }
+    // Validation state
+    const [errors, setErrors] = useState({ email: '' });
+    const [touched, setTouched] = useState({ email: false });
+
+    // Validation function
+    const validateEmailField = () => {
+        const result = validateEmail(email);
+        setErrors(prev => ({ ...prev, email: result.error }));
+        return result.isValid;
+    };
+
+    const handleBlur = () => {
+        setTouched({ email: true });
+        validateEmailField();
+    };
+
+    const handleSetEmail = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setEmail(e.target.value);
+        if (touched.email) validateEmailField();
+    };
 
     async function confirmResetPassword(event: React.FormEvent) : Promise<void>
     {
         event.preventDefault();
         
-        // Validate email format
-        if (!email || !isValidEmail(email)) {
+        // Mark field as touched
+        setTouched({ email: true });
+
+        // Validate email
+        const isEmailValid = validateEmailField();
+        
+        if (!isEmailValid) {
             setMessage('Please enter a valid email address');
             return;
         }
@@ -68,13 +89,27 @@ function ForgotPassword()
                 <span id="inner-title" className={styles.cardTitle}>Enter Email to Reset Password</span><br />
                 <div id="emailInput" className={styles.inputRow}>
                     <label className={styles.inputLabel} htmlFor="email">Email:</label>
-                    <input type="email" id="email" placeholder="Email" className={styles.textInput} onChange={(e) => setEmail(e.target.value)} required />
+                    <input 
+                        type="email" 
+                        id="email" 
+                        placeholder="johnDoe@example.com" 
+                        className={`${styles.textInput} ${touched.email && errors.email ? styles.inputError : ''}`}
+                        onChange={handleSetEmail}
+                        onBlur={handleBlur}
+                        required 
+                    />
+                    {touched.email && errors.email && (
+                        <span className={styles.errorMessage}>{errors.email}</span>
+                    )}
                 </div>
 
                 <input type="submit" id="submitButton" className={styles.buttons} value = "Reset Password"
                 onClick={confirmResetPassword} />
-                <div id="resetResult">{message}</div>
-                <br />
+                {message && (
+                    <div id="resetResult" className={`${styles.resultMessage} ${styles.error}`}>
+                        {message}
+                    </div>
+                )}
                 <br />
             </div>
         </div>
