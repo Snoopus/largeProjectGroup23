@@ -9,6 +9,7 @@ const {
   DB_NAME,
   USERS,
   CLASSES,
+  RECORDS,
   ERROR_MESSAGES
 } = require('./utils');
 
@@ -197,6 +198,130 @@ function setupClassRoutes(app, client) {
     }
   });
 
+  app.post('/api/leaveClass', async (req, res, next) => {
+    // incoming: userId (NID), class ObjectId
+    // outgoing: error
+
+    const { userId, classId } = req.body;
+
+    // Validate inputs
+    if (!areInputsValid(userId, classId)) {
+      return res.status(400).json({ error: ERROR_MESSAGES.INVALID_FIELDS });
+    }
+
+    // Validate classId format
+    if (!isValidObjectId(classId, ObjectId)) {
+      return res.status(400).json({ error: ERROR_MESSAGES.INVALID_OBJECT_ID });
+    }
+
+    try {
+      const db = client.db(DB_NAME);
+
+      // Find the class by classId (convert string to ObjectId)
+      const classObjectId = new ObjectId(classId);
+      const classToLeave = await db.collection(CLASSES).findOne({ _id: classObjectId });
+      if (!classToLeave) {
+        return res.status(404).json({ error: ERROR_MESSAGES.CLASS_NOT_FOUND });
+      }
+
+      const user = await db.collection(USERS).findOne({UserID: userId});
+      if (!user) {
+        return res.status(404).json({ error: ERROR_MESSAGES.USER_NOT_FOUND });
+      }
+
+      if (user.Role.toLowerCase() !== STUDENT) {
+        return res.status(403).json({ error: ERROR_MESSAGES.STUDENTS_ONLY });
+      }
+
+      // Remove user from class's studentList
+      await db.collection(CLASSES).updateOne(
+        { _id: classToLeave._id },
+        { $pull: { studentList: userId } }
+      );
+
+      // Remove class from user's classList
+      await db.collection(USERS).updateOne(
+        { UserID: userId },
+        { $pull: { classList: classObjectId } }
+      );
+
+      res.status(200).json({ error: '' });
+
+    } catch (e) {
+      console.error('Leave class error:', e);
+      res.status(500).json({ error: ERROR_MESSAGES.SERVER_ERROR });
+    }
+  });
+
+  app.post('/api/deleteClass', async (req, res, next) => {
+    // incoming: userId (NID - must be teacher), classId (ObjectId string)
+    // outgoing: error
+
+    const { userId, classId } = req.body;
+
+    // Validate inputs
+    if (!areInputsValid(userId, classId)) {
+      return res.status(400).json({ error: ERROR_MESSAGES.INVALID_FIELDS });
+    }
+
+    // Validate and convert classId to ObjectId
+    if (!isValidObjectId(classId, ObjectId)) {
+      return res.status(400).json({ error: ERROR_MESSAGES.INVALID_OBJECT_ID });
+    }
+
+    try {
+      const db = client.db(DB_NAME);
+
+      // Verify user exists and is a teacher BEFORE doing any operations
+      const user = await db.collection(USERS).findOne({ UserID: userId });
+      if (!user) {
+        return res.status(404).json({ error: ERROR_MESSAGES.USER_NOT_FOUND });
+      }
+
+      if (user.Role.toLowerCase() !== TEACHER) {
+        return res.status(403).json({ error: 'Only teachers can delete classes' });
+      }
+
+      // Find the class by classId
+      const classObjectId = new ObjectId(classId);
+      const classToDelete = await db.collection(CLASSES).findOne({ _id: classObjectId });
+      if (!classToDelete) {
+        return res.status(404).json({ error: ERROR_MESSAGES.CLASS_NOT_FOUND });
+      }
+
+      // Get the list of student IDs from the class
+      const studentList = classToDelete.studentList || [];
+
+      // Remove the class from all students' classList
+      if (studentList.length > 0) {
+        await db.collection(USERS).updateMany(
+          { UserID: { $in: studentList } },
+          { $pull: { classList: classObjectId } }
+        );
+      }
+
+      // Remove the class from the teacher's classList
+      await db.collection(USERS).updateOne(
+        { UserID: userId },
+        { $pull: { classList: classObjectId } }
+      );
+
+      // Finally, delete the class document itself
+      await db.collection(CLASSES).deleteOne({ _id: classObjectId });
+
+      // Delete all records associated with this class
+      await db.collection(RECORDS).deleteMany({ classId: classObjectId });
+
+      res.status(200).json({ error: '' });
+
+    } catch (e) {
+      console.error('Delete class error:', e);
+      res.status(500).json({ error: ERROR_MESSAGES.SERVER_ERROR });
+    }
+  });
+
 }
+
+
 
 module.exports = setupClassRoutes;

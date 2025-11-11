@@ -1,5 +1,6 @@
 // Authentication routes for login and register
 const jwt = require('jsonwebtoken');
+const postmark = require('postmark');
 const {
   areInputsValid,
   isValidEmail,
@@ -156,28 +157,113 @@ function setupAuthRoutes(app, client) {
 
   });
 
-
-  app.post('/api/changepassword', async (req, res, next) => {
-    // incoming: userId (NID), newPassword
+  app.post('/api/sendEmailCode', async (req, res, next) => {
+    // incoming: email, templateChoice
     // outgoing: error
 
-    const { userId, newPassword } = req.body;
+    const { email, templateChoice } = req.body;
+
+    const newCode = Math.floor(100000 + Math.random() * 900000).toString(); // Generate a 6-digit code
+    const newEntry = { email, code: newCode, createdAt: new Date() };
 
     // Validate inputs
-    if (!areInputsValid(userId, newPassword)) {
+    if (!areInputsValid(email, templateChoice)) {
+      return res.status(400).json({ error: ERROR_MESSAGES.INVALID_FIELDS });
+    }
+    // Validate email format
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ error: ERROR_MESSAGES.INVALID_EMAIL });
+    }
+
+    let TemplateID;
+    if (templateChoice === 'registration') {
+      TemplateID = 42075033; // Registration template ID
+    } else if (templateChoice === 'passwordReset') {
+      TemplateID = 42061052; // Password reset template ID
+    }
+
+    try {
+      // var postmarkClient = new postmark.ServerClient(process.env.POSTMARK_SERVER_TOKEN);
+      // var model = {
+      //   product_name: "bHere@UCF",
+      //   code: newCode,
+      //   company_name: "bHere@UCF",
+      //   company_address: "UCF, Orlando, FL",
+      //   operating_system: "Window"
+      // }
+
+      // var message = new postmark.TemplatedMessage("notifications@email.ilovenarwhals.xyz", TemplateID , model, email);
+    
+      // postmarkClient.sendEmailWithTemplate(message); //do not await
+
+      const db = client.db(DB_NAME);
+
+      await db.collection('emailCodes').insertOne(newEntry);
+
+      res.status(200).json({ error: '' });
+    } catch (e) {
+      console.error('Error sending email code:', e);
+      res.status(500).json({ error: ERROR_MESSAGES.SERVER_ERROR });
+    }
+  });
+
+  app.post('/api/verifyEmailCode', async (req, res, next) => {
+    // incoming: email, verificationCode
+    // outgoing: error
+
+    const { email, verificationCode } = req.body;
+
+    if (!areInputsValid(email, verificationCode)) {
       return res.status(400).json({ error: ERROR_MESSAGES.INVALID_FIELDS });
     }
 
     try {
       const db = client.db(DB_NAME);
+      const record = await db.collection('emailCodes').findOne({ email, code: verificationCode } );
 
-      const user = await db.collection(USERS).findOne({UserID: userId});
+      if (!record) {
+        return res.status(400).json({ error: ERROR_MESSAGES.INVALID_SECRET });
+      }
+      
+      if(record.code === verificationCode) {
+        // Code matches, verification successful
+        
+        //Delete the used code
+        await db.collection('emailCodes').deleteOne({ email, code: verificationCode });
+        return res.status(200).json({ error: '' });
+      }
+    } catch (e) {
+      console.error('Error verifying email code:', e);
+      res.status(500).json({ error: ERROR_MESSAGES.SERVER_ERROR });
+    }
+  });
+
+
+  app.post('/api/changepassword', async (req, res, next) => {
+    // incoming: email, newPassword
+    // outgoing: error
+
+    const { email, newPassword } = req.body;
+
+    // Validate inputs
+    if (!areInputsValid(email, newPassword)) {
+      return res.status(400).json({ error: ERROR_MESSAGES.INVALID_FIELDS });
+    }
+
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ error: ERROR_MESSAGES.INVALID_EMAIL });
+    }
+
+    try {
+      const db = client.db(DB_NAME);
+
+      const user = await db.collection(USERS).findOne({ login: email });
       if (!user) {
         return res.status(404).json({ error: ERROR_MESSAGES.USER_NOT_FOUND });
       }
 
       await db.collection(USERS).updateOne(
-        { UserID: userId },
+        { login: email },
         { $set: { password: newPassword } }
       );
 
@@ -186,7 +272,6 @@ function setupAuthRoutes(app, client) {
       res.status(500).json({ error: ERROR_MESSAGES.SERVER_ERROR });
     }
   });
-
 
   app.post('/api/checkjwt', async (req, res, next) => {
     //incoming: possibleJWT
@@ -210,7 +295,36 @@ function setupAuthRoutes(app, client) {
     } catch (e) {
       res.status(500).json({ contents: '', error: ERROR_MESSAGES.SERVER_ERROR });
     } 
+  });
 
+
+  app.post('/api/findExistingUser', async (req, res, next) => {
+    // incoming: email
+    // outgoing: error
+
+    const { email } = req.body;
+
+    // Validate inputs
+    if (!areInputsValid(email)) {
+      return res.status(400).json({ error: ERROR_MESSAGES.INVALID_FIELDS });
+    }
+
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ error: ERROR_MESSAGES.INVALID_EMAIL });
+    }
+
+    try {
+      const db = client.db(DB_NAME);
+
+      const user = await db.collection(USERS).findOne({ login: email });
+      if (!user) {
+        return res.status(404).json({ error: ERROR_MESSAGES.USER_NOT_FOUND });
+      }
+
+      res.status(200).json({ error: '' });
+    } catch (e) {
+      res.status(500).json({ error: ERROR_MESSAGES.SERVER_ERROR });
+    }
   });
 }
 

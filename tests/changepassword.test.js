@@ -37,7 +37,7 @@ afterAll(async () => {
   await new Promise(resolve => setTimeout(resolve, 500));
 });
 
-test('changepassword with missing userId returns 400', async () => {
+test('changepassword with missing email returns 400', async () => {
   const response = await request(app)
     .post('/api/changepassword')
     .send({ 
@@ -48,11 +48,11 @@ test('changepassword with missing userId returns 400', async () => {
   expect(response.body.error).toBe('Invalid or missing fields');
 });
 
-test('changepassword with empty userId returns 400', async () => {
+test('changepassword with empty email returns 400', async () => {
   const response = await request(app)
     .post('/api/changepassword')
     .send({ 
-      userId: '',
+      email: '',
       newPassword: 'NewPassword123' 
     });
 
@@ -60,23 +60,23 @@ test('changepassword with empty userId returns 400', async () => {
   expect(response.body.error).toBe('Invalid or missing fields');
 });
 
-test('changepassword with null userId returns 400', async () => {
+test('changepassword with invalid email format returns 400', async () => {
   const response = await request(app)
     .post('/api/changepassword')
     .send({ 
-      userId: null,
-      newPassword: 'NewPassword123' 
+      email: 'invalid-email',
+      newPassword: 'NewPassword123'
     });
 
   expect(response.status).toBe(400);
-  expect(response.body.error).toBe('Invalid or missing fields');
+  expect(response.body.error).toBe('Invalid email format');
 });
 
 test('changepassword with missing newPassword returns 400', async () => {
   const response = await request(app)
     .post('/api/changepassword')
     .send({ 
-      userId: jestUser.UserID
+      email: jestUser.login
     });
 
   expect(response.status).toBe(400);
@@ -87,7 +87,7 @@ test('changepassword with empty newPassword returns 400', async () => {
   const response = await request(app)
     .post('/api/changepassword')
     .send({ 
-      userId: jestUser.UserID,
+      email: jestUser.login,
       newPassword: '' 
     });
 
@@ -99,7 +99,7 @@ test('changepassword with null newPassword returns 400', async () => {
   const response = await request(app)
     .post('/api/changepassword')
     .send({ 
-      userId: jestUser.UserID,
+      email: jestUser.login,
       newPassword: null 
     });
 
@@ -107,14 +107,32 @@ test('changepassword with null newPassword returns 400', async () => {
   expect(response.body.error).toBe('Invalid or missing fields');
 });
 
-test('changepassword with valid data returns 200', async () => {
+test('changepassword with non-existing email returns 404', async () => {
   const response = await request(app)
     .post('/api/changepassword')
     .send({ 
-      userId: jestUser.UserID,
-      newPassword: 'UpdatedPassword456' 
+      email: 'nonexistent@test.com',
+      newPassword: 'SomePassword123' 
+    });
+
+  expect(response.status).toBe(404);
+  expect(response.body.error).toBe('User not found');
+});
+
+test('changepassword with valid data returns 200 and updates DB', async () => {
+  const NEW_PASSWORD = 'UpdatedPassword456';
+  const response = await request(app)
+    .post('/api/changepassword')
+    .send({ 
+      email: jestUser.login,
+      newPassword: NEW_PASSWORD 
     });
 
   expect(response.status).toBe(200);
   expect(response.body.error).toBe('');
+
+  // Verify password updated in DB
+  const updated = await db.collection('Users').findOne({ login: jestUser.login });
+  expect(updated).toBeTruthy();
+  expect(updated.password).toBe(NEW_PASSWORD);
 });

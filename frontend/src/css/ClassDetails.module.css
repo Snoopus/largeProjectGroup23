@@ -36,6 +36,53 @@
     color: #ffffff;
 }
 
+.container h1 {
+    margin-bottom: 20px;
+}
+
+.manageClassBox {
+    background-color: #1a1a1a;
+    border: 2px solid #ffc904;
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.manageClassHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.manageClassHeader h3 {
+    margin: 0;
+    color: #ffc904;
+    font-size: 18px;
+}
+
+.toggleManageButton {
+    background-color: #ffc904;
+    color: #000000;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+.toggleManageButton:hover {
+    background-color: #e6b400;
+}
+
+.manageClassContent {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #333;
+}
+
 .classId {
     color: #ffc904;
     margin-bottom: 30px;
@@ -147,5 +194,121 @@
 
 .studentTable tbody tr:last-child td {
     border-bottom: none;
+}
+
+.deleteButton,
+.leaveButton {
+    padding: 12px 24px;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 16px;
+    border: none;
+}
+
+.deleteButton {
+    background-color: #dc3545;
+    color: #ffffff;
+}
+
+.deleteButton:hover {
+    background-color: #c82333;
+}
+
+.leaveButton {
+    background-color: #ffc904;
+    color: #000000;
+}
+
+.leaveButton:hover {
+    background-color: #e6b400;
+}
+
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.75);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal {
+    background-color: #1a1a1a;
+    border: 3px solid #ffc904;
+    border-radius: 10px;
+    padding: 30px;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+}
+
+.modal h2 {
+    color: #ffc904;
+    margin-top: 0;
+    margin-bottom: 20px;
+}
+
+.modal p {
+    color: #ffffff;
+    line-height: 1.6;
+    margin-bottom: 25px;
+}
+
+.modalButtons {
+    display: flex;
+    gap: 15px;
+    justify-content: flex-end;
+}
+
+.cancelButton,
+.confirmDeleteButton,
+.confirmLeaveButton {
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    border: none;
+}
+
+.cancelButton {
+    background-color: #6c757d;
+    color: #ffffff;
+}
+
+.cancelButton:hover {
+    background-color: #5a6268;
+}
+
+.cancelButton:disabled,
+.confirmDeleteButton:disabled,
+.confirmLeaveButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.confirmDeleteButton {
+    background-color: #dc3545;
+    color: #ffffff;
+}
+
+.confirmDeleteButton:hover:not(:disabled) {
+    background-color: #c82333;
+}
+
+.confirmLeaveButton {
+    background-color: #ffc904;
+    color: #000000;
+}
+
+.confirmLeaveButton:hover:not(:disabled) {
+    background-color: #e6b400;
 }
 

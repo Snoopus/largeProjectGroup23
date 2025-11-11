@@ -9,6 +9,8 @@ import ClassDetailsPage from "./pages/ClassDetailsPage";
 import AddClassPage from "./pages/AddClassPage";
 import JoinClassPage from "./pages/joinClassPage";
 import EnterCodePage from "./pages/EnterCodePage";  
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ChangePasswordPage from "./pages/ChangePasswordPage";
 
 function App() {
   return (
@@ -22,6 +24,8 @@ function App() {
         <Route path="/addClass" element={<AddClassPage />} />
         <Route path="/joinClass" element={<JoinClassPage />} />
         <Route path="/verification" element={<EnterCodePage />} />
+        <Route path="/forgotpassword" element={<ForgotPasswordPage />} />
+        <Route path="/changepassword" element={<ChangePasswordPage />} />
       </Routes>
     </BrowserRouter>
   );
