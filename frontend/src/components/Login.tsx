@@ -3,6 +3,7 @@ import generalStyles from '../css/General.module.css';
 import { useState } from 'react';
 import { loginUser } from '../services/authService';
 import { validateEmail, validateRequired } from '../utils/validation';
+import { buildPath } from "../services/buildPath";
 
 // Merge both style objects - loginStyles will override generalStyles if there are conflicts
 const styles = { ...generalStyles, ...LoginStyles };
@@ -62,9 +63,28 @@ function Login()
         {    
             await loginUser(loginName, loginPassword);
             setMessage('');
-            const userData = localStorage.getItem('user_data');
-            if(userData) {
-                const user = JSON.parse(userData);
+            // JWT Validation
+            const jwt = localStorage.getItem('jwt_token');
+            if (jwt) {
+                // Fetch decoded data from API
+                const jwtresponse = await fetch(buildPath('api/checkjwt'), {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        possibleJWT: jwt
+                    }),
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const decodedjwt = await jwtresponse.json();
+    
+                let user;
+                if (decodedjwt.error) {
+                    setMessage(decodedjwt.error);
+                    return;
+                } else {
+                    user = decodedjwt.contents;
+                }
+            // End JWT Validation
+
                 if(user.role === "teacher") {
                     window.location.href = '/classes';
                     return;

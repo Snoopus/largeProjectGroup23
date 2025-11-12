@@ -1,4 +1,5 @@
 // Shared utility functions and constants
+const jwt = require('jsonwebtoken');
 
 // Helper function to validate inputs
 // Returns true if all provided values are valid (not null, undefined, or empty string)
@@ -56,13 +57,43 @@ const ERROR_MESSAGES = {
   SECRET_INACTIVE: 'No active secret session to end',
   INVALID_ROLE: 'Invalid role. Must be student or teacher',
   INVALID_EMAIL: 'Invalid email format',
-  INVALID_OBJECT_ID: 'Invalid class ID format'
+  INVALID_OBJECT_ID: 'Invalid class ID format',
+  JWT_MISSING: 'JSON Web Token not found',
+  JWT_EXPIRED: 'JSON Web Token has expired',
+  JWT_INVALID: 'JSON Web Token is malformed'
 };
+
+// Determine if JWT is valid.
+// If JWT is valid: return the contents (json)
+// If JWT is invalid: error
+function validateJWT(token) {
+  // If no token was received:
+  if (!token) {
+    return { error: ERROR_MESSAGES.JWT_MISSING };
+  }
+
+  try {
+    const jwtsecret = process.env.JWT_SECRET;
+    const decoded = jwt.verify(token, jwtsecret);
+    return decoded; // Token was valid, return its contents.
+  } catch (e) {
+    // Token was expired.
+    if (e.name == 'TokenExpiredError') {
+      return { error: ERROR_MESSAGES.JWT_EXPIRED };
+    }
+    // Something else is wrong with the token.
+    else {
+      return { error: ERROR_MESSAGES.JWT_INVALID };
+    }
+    
+  }
+}
 
 module.exports = {
   areInputsValid,
   isValidEmail,
   isValidObjectId,
+  validateJWT,
   STUDENT,
   TEACHER,
   DB_NAME,

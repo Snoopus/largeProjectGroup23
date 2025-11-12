@@ -1,10 +1,10 @@
 // Authentication routes for login and register
-
+const jwt = require('jsonwebtoken');
 const postmark = require('postmark');
-
 const {
   areInputsValid,
   isValidEmail,
+  validateJWT,
   STUDENT,
   TEACHER,
   DB_NAME,
@@ -44,12 +44,24 @@ function setupAuthRoutes(app, client) {
 
       if (results.length > 0) {
         const user = results[0];
+        const jwtsecret = process.env.JWT_SECRET;
+        const token = jwt.sign(
+          {
+            id: user.UserID,
+            firstName: user.FirstName,
+            lastName: user.LastName,
+            role: user.Role
+          }, jwtsecret, { expiresIn: '3h' }
+        );
+        console.log(token);
+
         return res.status(200).json({ 
           id: user.UserID, 
           firstName: user.FirstName, 
           lastName: user.LastName, 
           error: '', 
-          role: user.Role
+          role: user.Role,
+          token: token
         });
       }
 
@@ -128,13 +140,25 @@ function setupAuthRoutes(app, client) {
       // If no existing users found, proceed with registration
       await db.collection(USERS).insertOne(newUser);
       
-      // Successful registration
-      res.status(200).json({ error: '' });
-
     } catch (e) {
       console.error('Registration error:', e);
-      res.status(500).json({ error: ERROR_MESSAGES.SERVER_ERROR });
+      return res.status(500).json({ error: ERROR_MESSAGES.SERVER_ERROR });
     }
+
+    const jwtsecret = process.env.JWT_SECRET;
+    const token = jwt.sign(
+      {
+        id: id,
+        firstName: firstName,
+        lastName: lastName,
+        role: roleLower
+      }, jwtsecret, { expiresIn: '3h' }
+    );
+    console.log(token);
+
+    // Successful registration
+    res.status(200).json({ token: token, error: '' });
+
   });
 
   app.post('/api/sendEmailCode', async (req, res, next) => {
@@ -254,6 +278,30 @@ function setupAuthRoutes(app, client) {
     } catch (e) {
       res.status(500).json({ error: ERROR_MESSAGES.SERVER_ERROR });
     }
+  });
+
+  app.post('/api/checkjwt', async (req, res, next) => {
+    //incoming: possibleJWT
+    //outgoing: contents, error
+
+    const { possibleJWT } = req.body;
+
+    try {
+      
+      token = validateJWT(possibleJWT);
+      if ([
+        ERROR_MESSAGES.JWT_MISSING,
+        ERROR_MESSAGES.JWT_INVALID,
+        ERROR_MESSAGES.JWT_EXPIRED
+      ].includes(token)) {
+        return res.status(400).json({ contents: '', error: token });
+      } else { // Token is valid, so we know the contents.
+        return res.status(200).json({ contents: token, error: '' });
+      }
+      
+    } catch (e) {
+      res.status(500).json({ contents: '', error: ERROR_MESSAGES.SERVER_ERROR });
+    } 
   });
 
 

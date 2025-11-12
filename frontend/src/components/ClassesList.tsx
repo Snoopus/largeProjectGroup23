@@ -29,6 +29,7 @@ function ClassesList()
 
     async function fetchClasses() {
         try {
+            /*
             // Get user data from localStorage
             const userData = localStorage.getItem('user_data');
             if (!userData) {
@@ -38,6 +39,32 @@ function ClassesList()
             }
 
             const user = JSON.parse(userData);
+            */
+            
+            // Get user data from localStorage
+            const jwt = localStorage.getItem('jwt_token');
+            if (!jwt) {
+                setMessage('Please log in to view your classes');
+                setLoading(false);
+                return;
+            }
+
+            // Fetch decoded data from API
+            const jwtresponse = await fetch(buildPath('api/checkjwt'), {
+                method: 'POST',
+                body: JSON.stringify({
+                    possibleJWT: jwt
+                }),
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const decodedjwt = await jwtresponse.json();
+
+            let user;
+            if (decodedjwt.error) {
+                setMessage(decodedjwt.error);
+            } else {
+                user = decodedjwt.contents;
+            }
             
             // Fetch classes from API
             const response = await fetch(buildPath('api/fetchclasses'), {
