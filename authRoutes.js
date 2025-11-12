@@ -185,20 +185,23 @@ function setupAuthRoutes(app, client) {
     } else if (templateChoice === 'passwordReset') {
       TemplateID = 42061052; // Password reset template ID
     }
+    else {
+      TemplateID = 42075033; // Default to Registration template ID
+    }
 
     try {
-      // var postmarkClient = new postmark.ServerClient(process.env.POSTMARK_SERVER_TOKEN);
-      // var model = {
-      //   product_name: "bHere@UCF",
-      //   code: newCode,
-      //   company_name: "bHere@UCF",
-      //   company_address: "UCF, Orlando, FL",
-      //   operating_system: "Window"
-      // }
+      var postmarkClient = new postmark.ServerClient(process.env.POSTMARK_SERVER_TOKEN);
+      var model = {
+        product_name: "bHere@UCF",
+        code: newCode,
+        company_name: "bHere@UCF",
+        company_address: "UCF, Orlando, FL",
+        operating_system: "Window"
+      }
 
-      // var message = new postmark.TemplatedMessage("notifications@email.ilovenarwhals.xyz", TemplateID , model, email);
+      var message = new postmark.TemplatedMessage("notifications@email.ilovenarwhals.xyz", TemplateID , model, email);
     
-      // postmarkClient.sendEmailWithTemplate(message); //do not await
+      postmarkClient.sendEmailWithTemplate(message); //do not await
 
       const db = client.db(DB_NAME);
 
@@ -303,12 +306,12 @@ function setupAuthRoutes(app, client) {
 
 
   app.post('/api/findExistingUser', async (req, res, next) => {
-    // incoming: email
-    // outgoing: error
+    // incoming: email (required), userId (optional)
+    // outgoing: error, blank if user exists
 
-    const { email } = req.body;
+    const { email, userId } = req.body;
 
-    // Validate inputs
+    // Validate email is provided
     if (!areInputsValid(email)) {
       return res.status(400).json({ error: ERROR_MESSAGES.INVALID_FIELDS });
     }
@@ -320,7 +323,16 @@ function setupAuthRoutes(app, client) {
     try {
       const db = client.db(DB_NAME);
 
-      const user = await db.collection(USERS).findOne({ login: email });
+      let query;
+      // If both email and userId are provided, search for user with EITHER email OR userId
+      if (userId && userId.trim() !== '') {
+        query = { $or: [{ login: email }, { UserID: userId }] };
+      } else {
+        // If only email is provided, search by email only
+        query = { login: email };
+      }
+
+      const user = await db.collection(USERS).findOne(query);
       if (!user) {
         return res.status(404).json({ error: ERROR_MESSAGES.USER_NOT_FOUND });
       }

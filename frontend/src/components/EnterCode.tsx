@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { buildPath } from '../services/buildPath';
 import { registerUser } from '../services/authService';
+import { validateVerificationCode } from '../utils/validation';
 
 // Merge both style objects - loginStyles will override generalStyles if there are conflicts
 const styles = { ...generalStyles, ...LoginStyles };
@@ -19,11 +20,21 @@ function EnterCode({ mode }: EnterCodeProps) {
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
 
-    function isValidEmail(email: string): boolean {
-        // RFC 5322 compliant email regex (simplified version)
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return emailRegex.test(email);
-    }
+    // Validation state
+    const [errors, setErrors] = useState({ verificationCode: '' });
+    const [touched, setTouched] = useState({ verificationCode: false });
+
+    // Validation function
+    const validateVerificationCodeField = () => {
+        const result = validateVerificationCode(verificationCode);
+        setErrors(prev => ({ ...prev, verificationCode: result.error }));
+        return result.isValid;
+    };
+
+    const handleBlur = () => {
+        setTouched({ verificationCode: true });
+        validateVerificationCodeField();
+    };
 
     // Get email from navigation state (passed from Register or ForgotPassword page)
     useEffect(() => {
@@ -44,12 +55,6 @@ function EnterCode({ mode }: EnterCodeProps) {
         
         if (!emailAddress) {
             setMessage('Email not found. Please restart the process.');
-            return;
-        }
-
-        // Validate email format
-        if (!isValidEmail(emailAddress)) {
-            setMessage('Invalid email format. Please restart the process with a valid email.');
             return;
         }
         
@@ -94,7 +99,13 @@ function EnterCode({ mode }: EnterCodeProps) {
     async function verifyCode(event: React.FormEvent): Promise<void> {
         event.preventDefault();
         
-        if (!verificationCode || verificationCode.length !== 6) {
+        // Mark field as touched
+        setTouched({ verificationCode: true });
+
+        // Validate verification code
+        const isCodeValid = validateVerificationCodeField();
+        
+        if (!isCodeValid) {
             setMessage('Please enter a valid 6-digit code');
             return;
         }
@@ -166,6 +177,7 @@ function EnterCode({ mode }: EnterCodeProps) {
         // Only allow digits and limit to 6 characters
         const value = event.target.value.replace(/\D/g, '').slice(0, 6);
         setVerificationCode(value);
+        if (touched.verificationCode) validateVerificationCodeField();
     }
 
     return (
@@ -192,16 +204,18 @@ function EnterCode({ mode }: EnterCodeProps) {
                         type="text" 
                         id="classCode" 
                         placeholder="000000" 
-                        className={styles.textInput} 
+                        className={`${styles.textInput} ${touched.verificationCode && errors.verificationCode ? styles.inputError : ''}`}
                         value={verificationCode}
                         onChange={handleSetVerificationCode}
+                        onBlur={handleBlur}
                         maxLength={6}
                         disabled={isLoading}
                         autoComplete="off"
                     />
-                </div>
-
-                <button
+                    {touched.verificationCode && errors.verificationCode && (
+                        <span className={styles.errorMessage}>{errors.verificationCode}</span>
+                    )}
+                </div>                <button
                     type="submit"
                     className={styles.buttons}
                     onClick={verifyCode}
@@ -210,10 +224,18 @@ function EnterCode({ mode }: EnterCodeProps) {
                     {isLoading ? "Verifying..." : "Verify Code"}
                 </button>
                 
-                
+                {message && (
+                    <div id="registerResult" className={`${styles.resultMessage} ${
+                        message.includes('successfully') || message.includes('verified') || message.includes('Redirecting') 
+                            ? styles.success 
+                            : message.includes('sent')
+                            ? styles.info
+                            : styles.error
+                    }`}>
+                        {message}
+                    </div>
+                )}
 
-                <div id="registerResult">{message}</div>
-                <br />
                 <br />
             </div>
         </div>
