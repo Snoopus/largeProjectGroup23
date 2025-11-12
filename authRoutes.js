@@ -296,7 +296,7 @@ function setupAuthRoutes(app, client) {
         ERROR_MESSAGES.JWT_MISSING,
         ERROR_MESSAGES.JWT_INVALID,
         ERROR_MESSAGES.JWT_EXPIRED
-      ].includes(token)) {
+      ].includes(token.error)) {
         return res.status(400).json({ contents: '', error: token });
       } else { // Token is valid, so we know the contents.
         return res.status(200).json({ contents: token, error: '' });
