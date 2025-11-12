@@ -66,12 +66,12 @@ export async function registerUser(
         throw new Error(res.error || 'Registration failed');
     }
 
-    //return res;
+    return res;
 
-    const token = res.token;
-    localStorage.setItem('jwt_token', token);
-    console.log('JWT Stored: ', token);
-    return token;
+    // const token = res.token;
+    // localStorage.setItem('jwt_token', token);
+    // console.log('JWT Stored: ', token);
+    // return token;
 
     
 }

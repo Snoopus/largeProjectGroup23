@@ -61,7 +61,9 @@ function ClassesList()
 
             let user;
             if (decodedjwt.error) {
-                setMessage(decodedjwt.error);
+                localStorage.removeItem('jwt_token');
+                window.location.href = '/';
+                return;
             } else {
                 user = decodedjwt.contents;
             }

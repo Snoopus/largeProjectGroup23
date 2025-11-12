@@ -53,6 +53,7 @@ function setupAuthRoutes(app, client) {
             role: user.Role
           }, jwtsecret, { expiresIn: '3h' }
         );
+        //token printing for debugging
         console.log(token);
 
         return res.status(200).json({ 
@@ -154,6 +155,8 @@ function setupAuthRoutes(app, client) {
         role: roleLower
       }, jwtsecret, { expiresIn: '3h' }
     );
+
+    //token printing for debugging
     console.log(token);
 
     // Successful registration

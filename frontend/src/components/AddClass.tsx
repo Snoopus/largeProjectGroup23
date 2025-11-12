@@ -61,16 +61,44 @@ function AddClass()
     });
     
     useEffect(() => {
-        const userData = localStorage.getItem('user_data');
-        
-        if (userData) {
-          const user = JSON.parse(userData);
-            setUserFirstName(user.firstName || 'User');
-            setUserLastName(user.lastName || '');
-            setUserRole(user.role || '');
-            setUserId(user.id || '');
+        async function initializeUser() {
+            // Get JWT token from localStorage
+            const jwt = localStorage.getItem('jwt_token');
+            if (!jwt) {
+                setMessage('Please log in to add a class');
+                return;
+            }
+
+            try {
+                // Fetch decoded data from API
+                const jwtresponse = await fetch(buildPath('api/checkjwt'), {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        possibleJWT: jwt
+                    }),
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const decodedjwt = await jwtresponse.json();
+
+                if (decodedjwt.error) {
+                    localStorage.removeItem('jwt_token');
+                    window.location.href = '/';
+                    return;
+                }
+
+                const user = decodedjwt.contents;
+                setUserFirstName(user.firstName || 'User');
+                setUserLastName(user.lastName || '');
+                setUserRole(user.role || '');
+                setUserId(user.id || '');
+            } catch (error) {
+                setMessage('Failed to verify authentication');
+                console.error('JWT check error:', error);
+            }
         }
-      }, []);
+
+        initializeUser();
+    }, []);
 
     // Compute duration whenever start or end time changes
     useEffect(() => {

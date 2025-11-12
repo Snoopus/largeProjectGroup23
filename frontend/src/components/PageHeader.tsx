@@ -1,6 +1,7 @@
 import styles from '../css/PageHeader.module.css';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { buildPath } from '../services/buildPath';
 
 function PageHeader() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -9,20 +10,49 @@ function PageHeader() {
 
   // Check if user is logged in on component mount
   useEffect(() => {
-    const userData = localStorage.getItem('user_data');
-    
-    if (userData) {
-      const user = JSON.parse(userData);
-      setIsLoggedIn(true);
-      setUserName(user.firstName || 'User');
-      setUserRole(user.role || '');
+    async function initializeUser() {
+      // Get JWT token from localStorage
+      const jwt = localStorage.getItem('jwt_token');
+      
+      if (!jwt) {
+        setIsLoggedIn(false);
+        return;
+      }
+
+      try {
+        // Fetch decoded data from API
+        const jwtresponse = await fetch(buildPath('api/checkjwt'), {
+          method: 'POST',
+          body: JSON.stringify({
+            possibleJWT: jwt
+          }),
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const decodedjwt = await jwtresponse.json();
+
+        if (decodedjwt.error) {
+          localStorage.removeItem('jwt_token');
+          window.location.href = '/';
+          return;
+        }
+
+        const user = decodedjwt.contents;
+        setIsLoggedIn(true);
+        setUserName(user.firstName || 'User');
+        setUserRole(user.role || '');
+      } catch (error) {
+        setIsLoggedIn(false);
+        console.error('JWT check error:', error);
+      }
     }
+
+    initializeUser();
   }, []);
 
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.removeItem('user_data');
+    localStorage.removeItem('jwt_token');
     setIsLoggedIn(false);
     navigate('/');
   };
