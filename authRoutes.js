@@ -54,7 +54,7 @@ function setupAuthRoutes(app, client) {
           }, jwtsecret, { expiresIn: '3h' }
         );
         //token printing for debugging
-        console.log(token);
+        //console.log(token);
 
         return res.status(200).json({ 
           id: user.UserID, 
@@ -157,7 +157,7 @@ function setupAuthRoutes(app, client) {
     );
 
     //token printing for debugging
-    console.log(token);
+    //console.log(token);
 
     // Successful registration
     res.status(200).json({ token: token, error: '' });
