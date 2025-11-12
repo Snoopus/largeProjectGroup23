@@ -60,7 +60,11 @@ function ClassDetails() {
                 } else {
                     if (role === 'teacher') {
                         // Teacher gets full records with all student data
-                        setRecords(data.records || []);
+                        // Sort by startTime descending (most recent first)
+                        const sortedRecords = (data.records || []).sort((a: AttendanceRecord, b: AttendanceRecord) => 
+                            new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
+                        );
+                        setRecords(sortedRecords);
                     } else {
                         // Student gets filtered records, need to convert to full record format
                         interface StudentRecord {
@@ -79,7 +83,11 @@ function ClassDetails() {
                                 [userId]: record.studentPings
                             }
                         }));
-                        setRecords(studentRecords);
+                        // Sort by startTime descending (most recent first)
+                        const sortedStudentRecords = studentRecords.sort((a: AttendanceRecord, b: AttendanceRecord) => 
+                            new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
+                        );
+                        setRecords(sortedStudentRecords);
                     }
                 }
             } catch (error) {
@@ -90,19 +98,46 @@ function ClassDetails() {
             }
         }
 
-        const userData = localStorage.getItem('user_data');
-        if (!userData) {
-            setMessage('Please log in to view class details');
-            setLoading(false);
-            return;
+        async function initializeUser() {
+            // Get JWT token from localStorage
+            const jwt = localStorage.getItem('jwt_token');
+            if (!jwt) {
+                setMessage('Please log in to view class details');
+                setLoading(false);
+                return;
+            }
+
+            try {
+                // Fetch decoded data from API
+                const jwtresponse = await fetch(buildPath('api/checkjwt'), {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        possibleJWT: jwt
+                    }),
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const decodedjwt = await jwtresponse.json();
+
+                if (decodedjwt.error) {
+                    localStorage.removeItem('jwt_token');
+                    window.location.href = '/';
+                    return;
+                }
+
+                const user = decodedjwt.contents;
+                setUserRole(user.role);
+                setUserId(user.id);
+
+                // Fetch records from API
+                fetchRecords(user.id, user.role);
+            } catch (error) {
+                setMessage('Failed to verify authentication');
+                setLoading(false);
+                console.error('JWT check error:', error);
+            }
         }
 
-        const user = JSON.parse(userData);
-        setUserRole(user.role);
-        setUserId(user.id);
-
-        // Fetch records from API
-        fetchRecords(user.id, user.role);
+        initializeUser();
     }, [classId]);
 
     const toggleExpanded = (recordId: string) => {

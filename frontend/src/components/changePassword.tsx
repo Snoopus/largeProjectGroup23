@@ -90,8 +90,11 @@ function ChangePassword()
 
                 <input type="submit" id="submitButton" className={styles.buttons} value = "Reset Password"
                 onClick={confirmChangePassword} />
-                <div id="resetResult">{message}</div>
-                <br />
+                {message && (
+                    <div id="resetResult" className={`${styles.resultMessage} ${message.includes('successfully') ? styles.success : styles.error}`}>
+                        {message}
+                    </div>
+                )}
                 <br />
             </div>
         </div>

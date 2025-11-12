@@ -1,10 +1,10 @@
 // Authentication routes for login and register
-
+const jwt = require('jsonwebtoken');
 const postmark = require('postmark');
-
 const {
   areInputsValid,
   isValidEmail,
+  validateJWT,
   STUDENT,
   TEACHER,
   DB_NAME,
@@ -44,12 +44,25 @@ function setupAuthRoutes(app, client) {
 
       if (results.length > 0) {
         const user = results[0];
+        const jwtsecret = process.env.JWT_SECRET;
+        const token = jwt.sign(
+          {
+            id: user.UserID,
+            firstName: user.FirstName,
+            lastName: user.LastName,
+            role: user.Role
+          }, jwtsecret, { expiresIn: '3h' }
+        );
+        //token printing for debugging
+        //console.log(token);
+
         return res.status(200).json({ 
           id: user.UserID, 
           firstName: user.FirstName, 
           lastName: user.LastName, 
           error: '', 
-          role: user.Role
+          role: user.Role,
+          token: token
         });
       }
 
@@ -128,13 +141,27 @@ function setupAuthRoutes(app, client) {
       // If no existing users found, proceed with registration
       await db.collection(USERS).insertOne(newUser);
       
-      // Successful registration
-      res.status(200).json({ error: '' });
-
     } catch (e) {
       console.error('Registration error:', e);
-      res.status(500).json({ error: ERROR_MESSAGES.SERVER_ERROR });
+      return res.status(500).json({ error: ERROR_MESSAGES.SERVER_ERROR });
     }
+
+    const jwtsecret = process.env.JWT_SECRET;
+    const token = jwt.sign(
+      {
+        id: id,
+        firstName: firstName,
+        lastName: lastName,
+        role: roleLower
+      }, jwtsecret, { expiresIn: '3h' }
+    );
+
+    //token printing for debugging
+    //console.log(token);
+
+    // Successful registration
+    res.status(200).json({ token: token, error: '' });
+
   });
 
   app.post('/api/sendEmailCode', async (req, res, next) => {
@@ -161,20 +188,23 @@ function setupAuthRoutes(app, client) {
     } else if (templateChoice === 'passwordReset') {
       TemplateID = 42061052; // Password reset template ID
     }
+    else {
+      TemplateID = 42075033; // Default to Registration template ID
+    }
 
     try {
-      // var postmarkClient = new postmark.ServerClient(process.env.POSTMARK_SERVER_TOKEN);
-      // var model = {
-      //   product_name: "bHere@UCF",
-      //   code: newCode,
-      //   company_name: "bHere@UCF",
-      //   company_address: "UCF, Orlando, FL",
-      //   operating_system: "Window"
-      // }
+      var postmarkClient = new postmark.ServerClient(process.env.POSTMARK_SERVER_TOKEN);
+      var model = {
+        product_name: "bHere@UCF",
+        code: newCode,
+        company_name: "bHere@UCF",
+        company_address: "UCF, Orlando, FL",
+        operating_system: "Window"
+      }
 
-      // var message = new postmark.TemplatedMessage("notifications@email.ilovenarwhals.xyz", TemplateID , model, email);
+      var message = new postmark.TemplatedMessage("notifications@email.ilovenarwhals.xyz", TemplateID , model, email);
     
-      // postmarkClient.sendEmailWithTemplate(message); //do not await
+      postmarkClient.sendEmailWithTemplate(message); //do not await
 
       const db = client.db(DB_NAME);
 
@@ -253,14 +283,38 @@ function setupAuthRoutes(app, client) {
     }
   });
 
+  app.post('/api/checkjwt', async (req, res, next) => {
+    //incoming: possibleJWT
+    //outgoing: contents, error
+
+    const { possibleJWT } = req.body;
+
+    try {
+      
+      token = validateJWT(possibleJWT);
+      if ([
+        ERROR_MESSAGES.JWT_MISSING,
+        ERROR_MESSAGES.JWT_INVALID,
+        ERROR_MESSAGES.JWT_EXPIRED
+      ].includes(token.error)) {
+        return res.status(400).json({ contents: '', error: token });
+      } else { // Token is valid, so we know the contents.
+        return res.status(200).json({ contents: token, error: '' });
+      }
+      
+    } catch (e) {
+      res.status(500).json({ contents: '', error: ERROR_MESSAGES.SERVER_ERROR });
+    } 
+  });
+
 
   app.post('/api/findExistingUser', async (req, res, next) => {
-    // incoming: email
-    // outgoing: error
+    // incoming: email (required), userId (optional)
+    // outgoing: error, blank if user exists
 
-    const { email } = req.body;
+    const { email, userId } = req.body;
 
-    // Validate inputs
+    // Validate email is provided
     if (!areInputsValid(email)) {
       return res.status(400).json({ error: ERROR_MESSAGES.INVALID_FIELDS });
     }
@@ -272,7 +326,16 @@ function setupAuthRoutes(app, client) {
     try {
       const db = client.db(DB_NAME);
 
-      const user = await db.collection(USERS).findOne({ login: email });
+      let query;
+      // If both email and userId are provided, search for user with EITHER email OR userId
+      if (userId && userId.trim() !== '') {
+        query = { $or: [{ login: email }, { UserID: userId }] };
+      } else {
+        // If only email is provided, search by email only
+        query = { login: email };
+      }
+
+      const user = await db.collection(USERS).findOne(query);
       if (!user) {
         return res.status(404).json({ error: ERROR_MESSAGES.USER_NOT_FOUND });
       }

@@ -1,15 +1,51 @@
-import React, { useState } from 'react';
-
+import React, { useState, useEffect } from 'react';
+import { buildPath } from '../services/buildPath';
 
 function CardUI() {
-    let _ud : any = localStorage.getItem('user_data');
-    let ud = JSON.parse( _ud );
-    let userId : string = ud.id;
+    const [userId, setUserId] = useState('');
     const [message,setMessage] = useState('');
     const [searchResults,setResults] = useState('');
     const [cardList,setCardList] = useState('');
     const [search,setSearchValue] = React.useState('');
-    const [card,setCardNameValue] = React.useState(''); //this is the same as just useState, but if you dont import react you have to do it this way
+    const [card,setCardNameValue] = React.useState('');
+    
+    useEffect(() => {
+        async function initializeUser() {
+            // Get JWT token from localStorage
+            const jwt = localStorage.getItem('jwt_token');
+            
+            if (!jwt) {
+                setMessage('Please log in to use this feature');
+                return;
+            }
+
+            try {
+                // Fetch decoded data from API
+                const jwtresponse = await fetch(buildPath('api/checkjwt'), {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        possibleJWT: jwt
+                    }),
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const decodedjwt = await jwtresponse.json();
+
+                if (decodedjwt.error) {
+                    localStorage.removeItem('jwt_token');
+                    window.location.href = '/';
+                    return;
+                }
+
+                const user = decodedjwt.contents;
+                setUserId(user.id);
+            } catch (error) {
+                setMessage('Failed to verify authentication');
+                console.error('JWT check error:', error);
+            }
+        }
+
+        initializeUser();
+    }, []);
     
     async function addCard(e:any) : Promise<void>
     {

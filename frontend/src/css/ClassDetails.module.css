@@ -217,12 +217,12 @@
 }
 
 .leaveButton {
-    background-color: #ffc904;
+    background-color: #dc3545;
     color: #000000;
 }
 
 .leaveButton:hover {
-    background-color: #e6b400;
+    background-color: #c82333;
 }
 
 .modalOverlay {
