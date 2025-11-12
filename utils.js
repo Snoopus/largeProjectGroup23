@@ -73,7 +73,8 @@ function validateJWT(token) {
   }
 
   try {
-    const decoded = jwt.verify(token, 'superSecret');
+    const jwtsecret = process.env.JWT_SECRET;
+    const decoded = jwt.verify(token, jwtsecret);
     return decoded; // Token was valid, return its contents.
   } catch (e) {
     // Token was expired.

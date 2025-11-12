@@ -44,14 +44,16 @@ function setupAuthRoutes(app, client) {
 
       if (results.length > 0) {
         const user = results[0];
+        const jwtsecret = process.env.JWT_SECRET;
         const token = jwt.sign(
           {
             id: user.UserID,
             firstName: user.FirstName,
             lastName: user.LastName,
             role: user.Role
-          }, 'superSecret', { expiresIn: '3h' }
+          }, jwtsecret, { expiresIn: '3h' }
         );
+        console.log(token);
 
         return res.status(200).json({ 
           id: user.UserID, 
@@ -143,14 +145,16 @@ function setupAuthRoutes(app, client) {
       return res.status(500).json({ error: ERROR_MESSAGES.SERVER_ERROR });
     }
 
+    const jwtsecret = process.env.JWT_SECRET;
     const token = jwt.sign(
       {
         id: id,
         firstName: firstName,
         lastName: lastName,
         role: roleLower
-      }, 'superSecret', { expiresIn: '3h' }
+      }, jwtsecret, { expiresIn: '3h' }
     );
+    console.log(token);
 
     // Successful registration
     res.status(200).json({ token: token, error: '' });
