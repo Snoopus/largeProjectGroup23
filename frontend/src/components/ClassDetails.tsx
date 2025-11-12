@@ -60,7 +60,11 @@ function ClassDetails() {
                 } else {
                     if (role === 'teacher') {
                         // Teacher gets full records with all student data
-                        setRecords(data.records || []);
+                        // Sort by startTime descending (most recent first)
+                        const sortedRecords = (data.records || []).sort((a: AttendanceRecord, b: AttendanceRecord) => 
+                            new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
+                        );
+                        setRecords(sortedRecords);
                     } else {
                         // Student gets filtered records, need to convert to full record format
                         interface StudentRecord {
@@ -79,7 +83,11 @@ function ClassDetails() {
                                 [userId]: record.studentPings
                             }
                         }));
-                        setRecords(studentRecords);
+                        // Sort by startTime descending (most recent first)
+                        const sortedStudentRecords = studentRecords.sort((a: AttendanceRecord, b: AttendanceRecord) => 
+                            new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
+                        );
+                        setRecords(sortedStudentRecords);
                     }
                 }
             } catch (error) {
