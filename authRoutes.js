@@ -161,6 +161,9 @@ function setupAuthRoutes(app, client) {
     } else if (templateChoice === 'passwordReset') {
       TemplateID = 42061052; // Password reset template ID
     }
+    else {
+      TemplateID = 42075033; // Default to Registration template ID
+    }
 
     try {
       var postmarkClient = new postmark.ServerClient(process.env.POSTMARK_SERVER_TOKEN);
