@@ -18,7 +18,7 @@ export async function loginUser(loginName: string, password: string) {
     if (res.id <= 0) {
         throw new Error('User/Password combination incorrect');
     }
-
+    /*
     // Handle both firstName and first_name from API
     const user = { 
         firstName: res.firstName || res.first_name, 
@@ -30,6 +30,13 @@ export async function loginUser(loginName: string, password: string) {
     console.log('Raw localStorage data:', user); // Debug
 
     return user;
+    */
+    
+    const token = res.token;
+    localStorage.setItem('jwt_token', token);
+    console.log('JWT Stored: ', token);
+    return token;
+    
 }
 
 export async function registerUser(
@@ -59,5 +66,12 @@ export async function registerUser(
         throw new Error(res.error || 'Registration failed');
     }
 
-    return res;
+    //return res;
+
+    const token = res.token;
+    localStorage.setItem('jwt_token', token);
+    console.log('JWT Stored: ', token);
+    return token;
+
+    
 }
